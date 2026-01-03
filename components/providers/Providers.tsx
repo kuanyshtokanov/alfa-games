@@ -1,6 +1,7 @@
 'use client';
 
 import { ChakraProvider } from './ChakraProvider';
+import { AuthProvider } from './AuthProvider';
 import { ReactNode } from 'react';
 
 interface ProvidersProps {
@@ -8,6 +9,10 @@ interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps) {
-  return <ChakraProvider>{children}</ChakraProvider>;
+  return (
+    <ChakraProvider>
+      <AuthProvider>{children}</AuthProvider>
+    </ChakraProvider>
+  );
 }
 
