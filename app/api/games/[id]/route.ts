@@ -1,0 +1,277 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/utils/api-auth';
+import connectDB from '@/lib/mongodb/connect';
+import Game from '@/lib/mongodb/models/Game';
+import { z } from 'zod';
+import mongoose from 'mongoose';
+
+// Validation schema for updating games
+const updateGameSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().optional(),
+  location: z
+    .object({
+      address: z.string().min(1),
+      city: z.string().optional(),
+      country: z.string().optional(),
+      coordinates: z
+        .object({
+          lat: z.number(),
+          lng: z.number(),
+        })
+        .optional(),
+    })
+    .optional(),
+  datetime: z.string().datetime().optional(),
+  duration: z.number().min(1).optional(),
+  maxPlayers: z.number().min(1).optional(),
+  price: z.number().min(0).optional(),
+  currency: z.enum(['KZT', 'USD', 'EUR', 'RUB']).optional(),
+  skillLevel: z.enum(['beginner', 'intermediate', 'advanced', 'all']).optional(),
+  equipment: z
+    .object({
+      provided: z.array(z.string()),
+      needed: z.array(z.string()),
+    })
+    .optional(),
+  rules: z.string().optional(),
+  hostInfo: z.string().optional(),
+  cancellationPolicy: z.string().optional(),
+  cancellationRule: z
+    .enum(['anytime', '24hours', '48hours', '72hours', 'no_refund', 'custom'])
+    .optional(),
+  isPublic: z.boolean().optional(),
+  clubId: z.string().optional(),
+  status: z.enum(['upcoming', 'cancelled', 'completed']).optional(),
+});
+
+// GET /api/games/[id] - Get a single game
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+
+    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+      return NextResponse.json(
+        { error: 'Invalid game ID' },
+        { status: 400 }
+      );
+    }
+
+    const game = await Game.findById(params.id)
+      .populate('hostId', 'name email avatar')
+      .populate('clubId', 'name')
+      .lean();
+
+    if (!game) {
+      return NextResponse.json(
+        { error: 'Game not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        game: {
+          id: game._id,
+          hostId: game.hostId,
+          title: game.title,
+          description: game.description,
+          location: game.location,
+          datetime: game.datetime,
+          duration: game.duration,
+          maxPlayers: game.maxPlayers,
+          currentPlayersCount: game.currentPlayersCount,
+          price: game.price,
+          currency: game.currency,
+          skillLevel: game.skillLevel,
+          equipment: game.equipment,
+          rules: game.rules,
+          hostInfo: game.hostInfo,
+          cancellationPolicy: game.cancellationPolicy,
+          cancellationRule: game.cancellationRule,
+          isPublic: game.isPublic,
+          clubId: game.clubId,
+          status: game.status,
+          createdAt: game.createdAt,
+          updatedAt: game.updatedAt,
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    console.error('Error fetching game:', error);
+    const err = error as { message?: string };
+    return NextResponse.json(
+      { error: 'Internal server error', message: err.message || 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/games/[id] - Update a game
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    await connectDB();
+
+    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+      return NextResponse.json(
+        { error: 'Invalid game ID' },
+        { status: 400 }
+      );
+    }
+
+    const game = await Game.findById(params.id);
+    if (!game) {
+      return NextResponse.json(
+        { error: 'Game not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if user is the host or admin
+    if (
+      game.hostId.toString() !== user._id.toString() &&
+      user.role !== 'admin'
+    ) {
+      return NextResponse.json(
+        { error: 'Forbidden - You can only edit your own games' },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const validatedData = updateGameSchema.parse(body);
+
+    // Convert datetime string to Date if provided
+    if (validatedData.datetime) {
+      validatedData.datetime = new Date(validatedData.datetime) as unknown as string;
+    }
+
+    // Update game
+    Object.assign(game, validatedData);
+    await game.save();
+
+    const populatedGame = await Game.findById(game._id)
+      .populate('hostId', 'name email avatar')
+      .populate('clubId', 'name')
+      .lean();
+
+    return NextResponse.json(
+      {
+        success: true,
+        game: {
+          id: populatedGame!._id,
+          hostId: populatedGame!.hostId,
+          title: populatedGame!.title,
+          description: populatedGame!.description,
+          location: populatedGame!.location,
+          datetime: populatedGame!.datetime,
+          duration: populatedGame!.duration,
+          maxPlayers: populatedGame!.maxPlayers,
+          currentPlayersCount: populatedGame!.currentPlayersCount,
+          price: populatedGame!.price,
+          currency: populatedGame!.currency,
+          skillLevel: populatedGame!.skillLevel,
+          equipment: populatedGame!.equipment,
+          rules: populatedGame!.rules,
+          hostInfo: populatedGame!.hostInfo,
+          cancellationPolicy: populatedGame!.cancellationPolicy,
+          cancellationRule: populatedGame!.cancellationRule,
+          isPublic: populatedGame!.isPublic,
+          clubId: populatedGame!.clubId,
+          status: populatedGame!.status,
+          createdAt: populatedGame!.createdAt,
+          updatedAt: populatedGame!.updatedAt,
+        },
+      },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    console.error('Error updating game:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.issues },
+        { status: 400 }
+      );
+    }
+    const err = error as { message?: string };
+    return NextResponse.json(
+      { error: 'Internal server error', message: err.message || 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/games/[id] - Delete a game
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    await connectDB();
+
+    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+      return NextResponse.json(
+        { error: 'Invalid game ID' },
+        { status: 400 }
+      );
+    }
+
+    const game = await Game.findById(params.id);
+    if (!game) {
+      return NextResponse.json(
+        { error: 'Game not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if user is the host or admin
+    if (
+      game.hostId.toString() !== user._id.toString() &&
+      user.role !== 'admin'
+    ) {
+      return NextResponse.json(
+        { error: 'Forbidden - You can only delete your own games' },
+        { status: 403 }
+      );
+    }
+
+    await Game.findByIdAndDelete(params.id);
+
+    return NextResponse.json(
+      { success: true, message: 'Game deleted successfully' },
+      { status: 200 }
+    );
+  } catch (error: unknown) {
+    console.error('Error deleting game:', error);
+    const err = error as { message?: string };
+    return NextResponse.json(
+      { error: 'Internal server error', message: err.message || 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+

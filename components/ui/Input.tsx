@@ -3,6 +3,7 @@
  *
  * Reusable input field components matching Figma design system.
  * - TextInput: Standard text input with light gray border
+ * - TextArea: Standard textarea with light gray border
  * - SearchInput: Search bar with icon
  */
 
@@ -11,11 +12,14 @@
 import {
   Input as ChakraInput,
   InputProps as ChakraInputProps,
+  Textarea as ChakraTextarea,
+  TextareaProps as ChakraTextareaProps,
   Box,
   Icon,
 } from "@chakra-ui/react";
 
 export type TextInputProps = ChakraInputProps;
+export type TextAreaProps = ChakraTextareaProps;
 
 /**
  * Text Input - Standard input field matching Figma design
@@ -24,6 +28,29 @@ export type TextInputProps = ChakraInputProps;
 export function TextInput({ ...props }: TextInputProps) {
   return (
     <ChakraInput
+      borderColor="gray.300"
+      _hover={{ borderColor: "gray.400" }}
+      _focus={{
+        borderColor: "primary.400",
+        boxShadow: "0 0 0 1px var(--chakra-colors-primary-400)",
+      }}
+      borderRadius="md"
+      bg="white"
+      color="text.primary"
+      _placeholder={{ color: "gray.400" }}
+      {...props}
+    />
+  );
+}
+
+/**
+ * Text Area - Standard textarea field matching Figma design
+ * Light gray border (#A0AEC0), rounded corners
+ * Same styling as TextInput for consistency
+ */
+export function TextArea({ ...props }: TextAreaProps) {
+  return (
+    <ChakraTextarea
       borderColor="gray.300"
       _hover={{ borderColor: "gray.400" }}
       _focus={{

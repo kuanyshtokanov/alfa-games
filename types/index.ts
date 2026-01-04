@@ -1,2 +1,3 @@
-// Type definitions will be added here as the project develops
+// Export all shared types
+export type * from "./game";
 
