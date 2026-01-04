@@ -1,47 +1,48 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Button,
   Container,
-  FormControl,
-  FormLabel,
+  FieldRoot,
+  FieldLabel,
   Input,
   Heading,
   Text,
   VStack,
   HStack,
-  Divider,
-  Alert,
-  AlertIcon,
+  Separator,
+  AlertRoot,
+  AlertContent,
+  AlertIndicator,
   Link,
   Icon,
-} from '@chakra-ui/react';
-import { useAuth } from '@/components/providers/AuthProvider';
+} from "@chakra-ui/react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function SignupPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { signUp, signInWithGoogle, signInWithFacebook } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError("Password must be at least 6 characters");
       return;
     }
 
@@ -49,35 +50,38 @@ export default function SignupPage() {
 
     try {
       await signUp(email, password, name);
-      router.push('/games');
-    } catch (err: any) {
-      setError(err.message || 'Failed to create account');
+      router.push("/games/my-games");
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || "Failed to create account");
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setError('');
+    setError("");
     setLoading(true);
     try {
       await signInWithGoogle();
-      router.push('/games');
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google');
+      router.push("/games/my-games");
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || "Failed to sign in with Google");
     } finally {
       setLoading(false);
     }
   };
 
   const handleFacebookSignIn = async () => {
-    setError('');
+    setError("");
     setLoading(true);
     try {
       await signInWithFacebook();
-      router.push('/games');
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Facebook');
+      router.push("/games/my-games");
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      setError(error.message || "Failed to sign in with Facebook");
     } finally {
       setLoading(false);
     }
@@ -85,7 +89,7 @@ export default function SignupPage() {
 
   return (
     <Container maxW="md" py={12}>
-      <VStack spacing={8}>
+      <VStack gap={8}>
         <Box textAlign="center">
           <Heading size="xl" mb={2}>
             Create Account
@@ -95,15 +99,15 @@ export default function SignupPage() {
 
         <Box w="full">
           {error && (
-            <Alert status="error" mb={4} borderRadius="md">
-              <AlertIcon />
-              {error}
-            </Alert>
+            <AlertRoot status="error" mb={4} borderRadius="md">
+              <AlertIndicator />
+              <AlertContent>{error}</AlertContent>
+            </AlertRoot>
           )}
 
-          <VStack spacing={4} as="form" onSubmit={handleSubmit}>
-            <FormControl>
-              <FormLabel>Full Name</FormLabel>
+          <VStack gap={4} as="form" onSubmit={handleSubmit}>
+            <FieldRoot>
+              <FieldLabel>Full Name</FieldLabel>
               <Input
                 type="text"
                 value={name}
@@ -111,10 +115,10 @@ export default function SignupPage() {
                 placeholder="John Doe"
                 size="lg"
               />
-            </FormControl>
+            </FieldRoot>
 
-            <FormControl isRequired>
-              <FormLabel>Email</FormLabel>
+            <FieldRoot required>
+              <FieldLabel>Email</FieldLabel>
               <Input
                 type="email"
                 value={email}
@@ -122,10 +126,10 @@ export default function SignupPage() {
                 placeholder="your@email.com"
                 size="lg"
               />
-            </FormControl>
+            </FieldRoot>
 
-            <FormControl isRequired>
-              <FormLabel>Password</FormLabel>
+            <FieldRoot required>
+              <FieldLabel>Password</FieldLabel>
               <Input
                 type="password"
                 value={password}
@@ -133,10 +137,10 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 size="lg"
               />
-            </FormControl>
+            </FieldRoot>
 
-            <FormControl isRequired>
-              <FormLabel>Confirm Password</FormLabel>
+            <FieldRoot required>
+              <FieldLabel>Confirm Password</FieldLabel>
               <Input
                 type="password"
                 value={confirmPassword}
@@ -144,36 +148,37 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 size="lg"
               />
-            </FormControl>
+            </FieldRoot>
 
             <Button
               type="submit"
-              colorScheme="blue"
+              colorPalette="blue"
               size="lg"
               w="full"
-              isLoading={loading}
+              loading={loading}
               loadingText="Creating account..."
             >
               Sign Up
             </Button>
           </VStack>
 
-          <HStack my={6}>
-            <Divider />
+          <HStack my={6} gap={2}>
+            <Separator />
             <Text fontSize="sm" color="gray.500">
               OR
             </Text>
-            <Divider />
+            <Separator />
           </HStack>
 
-          <VStack spacing={3}>
+          <VStack gap={3}>
             <Button
               onClick={handleGoogleSignIn}
               variant="outline"
               size="lg"
               w="full"
-              isLoading={loading}
-              leftIcon={
+              loading={loading}
+            >
+              <HStack gap={2}>
                 <Icon viewBox="0 0 24 24" boxSize={5}>
                   <path
                     fill="currentColor"
@@ -192,9 +197,8 @@ export default function SignupPage() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </Icon>
-              }
-            >
-              Continue with Google
+                <Text>Continue with Google</Text>
+              </HStack>
             </Button>
 
             <Button
@@ -202,22 +206,22 @@ export default function SignupPage() {
               variant="outline"
               size="lg"
               w="full"
-              isLoading={loading}
-              leftIcon={
+              loading={loading}
+            >
+              <HStack gap={2}>
                 <Icon viewBox="0 0 24 24" boxSize={5}>
                   <path
                     fill="currentColor"
                     d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
                   />
                 </Icon>
-              }
-            >
-              Continue with Facebook
+                <Text>Continue with Facebook</Text>
+              </HStack>
             </Button>
           </VStack>
 
           <Text mt={6} textAlign="center" fontSize="sm">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <Link href="/login" color="blue.500" fontWeight="semibold">
               Sign in
             </Link>
@@ -227,4 +231,3 @@ export default function SignupPage() {
     </Container>
   );
 }
-

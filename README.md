@@ -40,6 +40,17 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
+# Firebase Admin SDK (for server-side token verification)
+# Option 1: As environment variable (JSON string)
+# Get this from Firebase Console > Project Settings > Service Accounts > Generate New Private Key
+# Copy the entire JSON content as a single-line string (or use a JSON minifier)
+# FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account","project_id":"...","private_key":"...",...}
+
+# Option 2: As a file (recommended for development)
+# Create a file named .env.service-key in the root directory
+# Copy the entire JSON content from the downloaded service account key file
+# The file will be automatically read and used for authentication
+
 # MongoDB Configuration
 MONGODB_URI=your_mongodb_connection_string
 

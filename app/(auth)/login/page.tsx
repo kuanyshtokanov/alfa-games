@@ -30,7 +30,7 @@ function LoginForm() {
   const { signIn, signInWithGoogle, signInWithFacebook } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/games";
+  const redirect = searchParams.get("redirect") || "/games/my-games";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
