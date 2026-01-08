@@ -18,16 +18,16 @@ const config = defineConfig({
     // Color Palette - Extracted from Figma designs
     tokens: {
       colors: {
-        // Primary Brand Colors - Green palette (#4ade80 from Figma)
+        // Primary Brand Colors - Green palette (#3CB371 from design)
         primary: {
           50: { value: "#f0fdf4" },
           100: { value: "#dcfce7" },
           200: { value: "#bbf7d0" },
           300: { value: "#86efac" },
-          400: { value: "#4ade80" }, // Main primary color from Figma
-          500: { value: "#4ade80" }, // Main primary color (same as 400 for consistency)
-          600: { value: "#22c55e" }, // Hover state
-          700: { value: "#16a34a" }, // Active state
+          400: { value: "#3CB371" }, // Main primary color from design
+          500: { value: "#3CB371" }, // Main primary color (same as 400 for consistency)
+          600: { value: "#2FA060" }, // Hover state
+          700: { value: "#258F4F" }, // Active state
           800: { value: "#15803d" },
           900: { value: "#14532d" },
           950: { value: "#052e16" },
@@ -46,18 +46,18 @@ const config = defineConfig({
           900: { value: "#1e3a8a" },
           950: { value: "#172554" },
         },
-        // Neutral Colors - Matching Figma design tokens
+        // Neutral Colors - Matching design tokens
         gray: {
           50: { value: "#f9fafb" },
           100: { value: "#f3f4f6" },
           200: { value: "#e5e7eb" },
           300: { value: "#d1d5db" },
-          400: { value: "#A0AEC0" }, // Light gray from Figma (secondary text, placeholders)
+          400: { value: "#9CA3AF" }, // Light gray from design (secondary text, placeholders)
           500: { value: "#718096" }, // Medium gray
           600: { value: "#4a5568" },
-          700: { value: "#2D3748" }, // Dark gray from Figma (primary text)
+          700: { value: "#2D3748" }, // Dark gray
           800: { value: "#1a202c" },
-          900: { value: "#171923" },
+          900: { value: "#111827" }, // Darkest gray from design (primary text)
           950: { value: "#0a0e1a" },
         },
         // Semantic Colors
@@ -95,11 +95,11 @@ const config = defineConfig({
           secondary: { value: "#f9fafb" },
           muted: { value: "#f3f4f6" },
         },
-        // Text colors - Matching Figma design tokens
+        // Text colors - Matching design tokens
         text: {
-          primary: { value: "#2D3748" }, // Dark gray from Figma
-          secondary: { value: "#A0AEC0" }, // Light gray from Figma
-          muted: { value: "#A0AEC0" }, // Same as secondary for consistency
+          primary: { value: "#111827" }, // Darkest gray from design
+          secondary: { value: "#9CA3AF" }, // Light gray from design
+          muted: { value: "#9CA3AF" }, // Same as secondary for consistency
           inverse: { value: "#ffffff" },
         },
       },

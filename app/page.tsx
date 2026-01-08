@@ -12,8 +12,8 @@ export default function Home() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        // User is authenticated, redirect to games/my-games (dashboard)
-        router.push("/games/my-games");
+        // User is authenticated, redirect to games (Find a Match page)
+        router.push("/games");
       } else {
         // User is not authenticated, redirect to onboarding
         router.push("/onboarding");

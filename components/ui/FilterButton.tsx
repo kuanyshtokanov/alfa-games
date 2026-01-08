@@ -1,16 +1,16 @@
 /**
  * Filter Button Component
- * 
+ *
  * Reusable filter/toggle button component matching Figma design system.
  * Used for filtering events (All, Football, Basketball, etc.)
  * Active state: Green background (#4ade80)
  * Inactive state: Light gray background with border
  */
 
-'use client';
+"use client";
 
-import { Button, ButtonProps } from '@chakra-ui/react';
-import { ReactNode } from 'react';
+import { Button, ButtonProps } from "@chakra-ui/react";
+import { ReactNode } from "react";
 
 export interface FilterButtonProps extends ButtonProps {
   children: ReactNode;
@@ -19,27 +19,33 @@ export interface FilterButtonProps extends ButtonProps {
 
 /**
  * Filter Button - Toggle button for filtering content
- * Active: Green background (#4ade80 from Figma)
- * Inactive: Light gray background with border
+ * Active: Green background using theme primary color
+ * Inactive: White background with border using theme colors
  */
-export function FilterButton({ children, isActive = false, ...props }: FilterButtonProps) {
+export function FilterButton({
+  children,
+  isActive = false,
+  ...props
+}: FilterButtonProps) {
   return (
     <Button
-      bg={isActive ? 'primary.400' : 'white'}
-      color={isActive ? 'white' : 'text.primary'}
+      bg={isActive ? "primary.400" : "white"}
+      color={isActive ? "white" : "gray.900"}
       border="1px solid"
-      borderColor={isActive ? 'primary.400' : 'gray.300'}
-      borderRadius="md"
-      fontWeight="medium"
-      fontSize="sm"
+      borderColor={isActive ? "primary.400" : "gray.200"}
+      borderRadius="full"
+      fontWeight="600"
+      fontSize="14px"
+      fontFamily="var(--font-inter), sans-serif"
       px={4}
       py={2}
+      h="auto"
       _hover={{
-        bg: isActive ? 'primary.600' : 'gray.50',
-        borderColor: isActive ? 'primary.600' : 'gray.400',
+        bg: isActive ? "primary.600" : "gray.50",
+        borderColor: isActive ? "primary.600" : "gray.300",
       }}
       _active={{
-        bg: isActive ? 'primary.700' : 'gray.100',
+        bg: isActive ? "primary.700" : "gray.100",
       }}
       {...props}
     >
@@ -47,4 +53,3 @@ export function FilterButton({ children, isActive = false, ...props }: FilterBut
     </Button>
   );
 }
-

@@ -7,7 +7,7 @@
 
 'use client';
 
-import { Box, HStack, VStack, Icon, Text } from '@chakra-ui/react';
+import { Box, HStack, VStack, Text } from '@chakra-ui/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -53,11 +53,24 @@ export function BottomNav({ items }: BottomNavProps) {
               <VStack
                 gap={1}
                 py={2}
-                color={isActive ? 'primary.400' : 'text.secondary'}
-                _hover={{ color: 'primary.400' }}
+                color={isActive ? '#3CB371' : '#9CA3AF'}
+                _hover={{ color: '#3CB371' }}
               >
-                <Box fontSize="xl">{item.icon}</Box>
-                <Text fontSize="xs" fontWeight={isActive ? 'semibold' : 'normal'}>
+                <Box
+                  fontSize="xl"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  color={isActive ? '#3CB371' : '#9CA3AF'}
+                >
+                  {item.icon}
+                </Box>
+                <Text
+                  fontSize="12px"
+                  fontWeight={isActive ? '600' : '500'}
+                  fontFamily="var(--font-inter), sans-serif"
+                  color={isActive ? '#3CB371' : '#9CA3AF'}
+                >
                   {item.label}
                 </Text>
               </VStack>
