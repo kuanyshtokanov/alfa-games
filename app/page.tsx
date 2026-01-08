@@ -15,8 +15,8 @@ export default function Home() {
         // User is authenticated, redirect to games/my-games (dashboard)
         router.push("/games/my-games");
       } else {
-        // User is not authenticated, redirect to login
-        router.push("/login");
+        // User is not authenticated, redirect to onboarding
+        router.push("/onboarding");
       }
     }
   }, [user, loading, router]);

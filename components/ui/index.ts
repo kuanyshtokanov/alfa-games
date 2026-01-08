@@ -5,7 +5,7 @@
  */
 
 // Buttons
-export { PrimaryButton, SecondaryButton, SocialButton } from "./Button";
+export { PrimaryButton, SecondaryButton, DarkButton, OrangeButton, DisabledButton, SocialButton } from "./Button";
 export type { ButtonProps } from "./Button";
 
 // Inputs
