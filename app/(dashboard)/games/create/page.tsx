@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
@@ -8,7 +8,6 @@ import {
   VStack,
   Heading,
   FieldRoot,
-  FieldLabel,
   HStack,
   SimpleGrid,
   AlertRoot,
@@ -16,11 +15,17 @@ import {
   AlertIndicator,
   NativeSelectRoot,
   NativeSelectField,
+  Center,
+  Text,
 } from "@chakra-ui/react";
 import { Header } from "@/components/ui/Header";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Button";
 import { TextInput, TextArea } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
+import { BottomNav } from "@/components/ui/BottomNav";
+import { getBottomNavItems } from "@/lib/navigation";
+import { StyledFieldLabel } from "@/components/ui/FieldLabel";
+import { getCurrentUserRole, canUserCreateGame } from "@/lib/utils/rbac-client";
 import type { GameFormData } from "@/types/game";
 
 export default function CreateGamePage() {
@@ -28,6 +33,9 @@ export default function CreateGamePage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checkingPermissions, setCheckingPermissions] = useState(true);
+  const [canCreate, setCanCreate] = useState(false);
+  const [navItems, setNavItems] = useState(getBottomNavItems());
   const [formData, setFormData] = useState<GameFormData>({
     title: "",
     description: "",
@@ -53,6 +61,17 @@ export default function CreateGamePage() {
     isPublic: true,
   });
 
+  // Track numeric field values as strings for proper input handling
+  const [numericFields, setNumericFields] = useState<{
+    duration: string;
+    maxPlayers: string;
+    price: string;
+  }>({
+    duration: "90",
+    maxPlayers: "22",
+    price: "0",
+  });
+
   // Helper function to update nested location fields
   const updateLocationField = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -66,10 +85,26 @@ export default function CreateGamePage() {
 
   // Helper function to update numeric fields
   const updateNumericField = (name: string, value: string) => {
-    setFormData((prev) => ({
+    // Update the string representation for display
+    setNumericFields((prev) => ({
       ...prev,
-      [name]: parseFloat(value) || 0,
+      [name]: value,
     }));
+
+    // Update the actual form data with parsed number (or 0 if empty)
+    const numValue = value === "" ? 0 : parseFloat(value);
+    if (!isNaN(numValue)) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: numValue,
+      }));
+    } else if (value === "") {
+      // Allow empty string - set to 0 for validation
+      setFormData((prev) => ({
+        ...prev,
+        [name]: 0,
+      }));
+    }
   };
 
   // Helper function to update checkbox fields
@@ -87,6 +122,56 @@ export default function CreateGamePage() {
       [name]: value,
     }));
   };
+
+  // Check permissions on mount
+  useEffect(() => {
+    if (!user) {
+      setCheckingPermissions(false);
+      setCanCreate(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const checkPermissions = async () => {
+      try {
+        const userRole = await getCurrentUserRole(user);
+
+        if (cancelled) return;
+
+        if (!userRole) {
+          setCanCreate(false);
+          setCheckingPermissions(false);
+          return;
+        }
+
+        const canCreateGame = canUserCreateGame(userRole);
+
+        if (cancelled) return;
+
+        setCanCreate(canCreateGame);
+        setCheckingPermissions(false);
+
+        // Update navigation items based on user role
+        setNavItems(
+          getBottomNavItems(userRole.role, userRole.isClubManager || false)
+        );
+      } catch (err) {
+        console.error("Error checking permissions:", err);
+        if (!cancelled) {
+          setCanCreate(false);
+          setCheckingPermissions(false);
+        }
+      }
+    };
+
+    checkPermissions();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -130,6 +215,17 @@ export default function CreateGamePage() {
         throw new Error("You must be logged in to create a game");
       }
 
+      // Validate required numeric fields
+      if (!formData.duration || formData.duration <= 0) {
+        throw new Error("Duration must be greater than 0");
+      }
+      if (!formData.maxPlayers || formData.maxPlayers <= 0) {
+        throw new Error("Max players must be greater than 0");
+      }
+      if (formData.price === undefined || formData.price < 0) {
+        throw new Error("Price must be 0 or greater");
+      }
+
       const token = await user.getIdToken();
       const response = await fetch("/api/games", {
         method: "POST",
@@ -139,6 +235,9 @@ export default function CreateGamePage() {
         },
         body: JSON.stringify({
           ...formData,
+          duration: Number(formData.duration),
+          maxPlayers: Number(formData.maxPlayers),
+          price: Number(formData.price),
           datetime: new Date(formData.datetime).toISOString(),
         }),
       });
@@ -162,8 +261,45 @@ export default function CreateGamePage() {
     return null;
   }
 
+  if (checkingPermissions) {
+    return (
+      <Box minH="100vh" bg="bg.secondary">
+        <Header title="Create Game" showBackButton />
+        <Center py={12}>
+          <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">
+            Checking permissions...
+          </Text>
+        </Center>
+      </Box>
+    );
+  }
+
+  if (!canCreate) {
+    return (
+      <Box minH="100vh" bg="bg.secondary">
+        <Header title="Create Game" showBackButton />
+        <Box p={4} maxW="800px" mx="auto">
+          <Card>
+            <VStack gap={4} py={8}>
+              <AlertRoot status="error">
+                <AlertIndicator />
+                <AlertContent>
+                  You don&apos;t have permission to create games. Only hosts,
+                  admins, and club managers can create games.
+                </AlertContent>
+              </AlertRoot>
+              <SecondaryButton onClick={() => router.back()}>
+                Go Back
+              </SecondaryButton>
+            </VStack>
+          </Card>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
-    <Box minH="100vh" bg="bg.secondary">
+    <Box minH="100vh" bg="bg.secondary" pb={20}>
       <Header title="Create Game" showBackButton />
       <Box p={4} maxW="800px" mx="auto">
         <Card>
@@ -177,7 +313,7 @@ export default function CreateGamePage() {
               )}
 
               <FieldRoot required>
-                <FieldLabel>Game Title</FieldLabel>
+                <StyledFieldLabel>Game Title</StyledFieldLabel>
                 <TextInput
                   name="title"
                   value={formData.title}
@@ -187,7 +323,7 @@ export default function CreateGamePage() {
               </FieldRoot>
 
               <FieldRoot>
-                <FieldLabel>Description</FieldLabel>
+                <StyledFieldLabel>Description</StyledFieldLabel>
                 <TextArea
                   name="description"
                   value={formData.description}
@@ -198,9 +334,15 @@ export default function CreateGamePage() {
               </FieldRoot>
 
               <VStack align="stretch" gap={4}>
-                <Heading size="md">Location</Heading>
+                <Heading
+                  size="md"
+                  color="gray.900"
+                  fontFamily="var(--font-inter), sans-serif"
+                >
+                  Location
+                </Heading>
                 <FieldRoot required>
-                  <FieldLabel>Address</FieldLabel>
+                  <StyledFieldLabel>Address</StyledFieldLabel>
                   <TextInput
                     name="location.address"
                     value={formData.location.address}
@@ -210,7 +352,7 @@ export default function CreateGamePage() {
                 </FieldRoot>
                 <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                   <FieldRoot>
-                    <FieldLabel>City</FieldLabel>
+                    <StyledFieldLabel>City</StyledFieldLabel>
                     <TextInput
                       name="location.city"
                       value={formData.location.city}
@@ -219,7 +361,7 @@ export default function CreateGamePage() {
                     />
                   </FieldRoot>
                   <FieldRoot>
-                    <FieldLabel>Country</FieldLabel>
+                    <StyledFieldLabel>Country</StyledFieldLabel>
                     <TextInput
                       name="location.country"
                       value={formData.location.country}
@@ -232,7 +374,7 @@ export default function CreateGamePage() {
 
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                 <FieldRoot required>
-                  <FieldLabel>Date & Time</FieldLabel>
+                  <StyledFieldLabel>Date & Time</StyledFieldLabel>
                   <TextInput
                     name="datetime"
                     type="datetime-local"
@@ -241,11 +383,11 @@ export default function CreateGamePage() {
                   />
                 </FieldRoot>
                 <FieldRoot required>
-                  <FieldLabel>Duration (minutes)</FieldLabel>
+                  <StyledFieldLabel>Duration (minutes)</StyledFieldLabel>
                   <TextInput
                     name="duration"
                     type="number"
-                    value={formData.duration}
+                    value={numericFields.duration}
                     onChange={handleInputChange}
                     min={1}
                   />
@@ -254,28 +396,28 @@ export default function CreateGamePage() {
 
               <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
                 <FieldRoot required>
-                  <FieldLabel>Max Players</FieldLabel>
+                  <StyledFieldLabel>Max Players</StyledFieldLabel>
                   <TextInput
                     name="maxPlayers"
                     type="number"
-                    value={formData.maxPlayers}
+                    value={numericFields.maxPlayers}
                     onChange={handleInputChange}
                     min={1}
                   />
                 </FieldRoot>
                 <FieldRoot required>
-                  <FieldLabel>Price</FieldLabel>
+                  <StyledFieldLabel>Price</StyledFieldLabel>
                   <TextInput
                     name="price"
                     type="number"
-                    value={formData.price}
+                    value={numericFields.price}
                     onChange={handleInputChange}
                     min={0}
                     step="0.01"
                   />
                 </FieldRoot>
                 <FieldRoot required>
-                  <FieldLabel>Currency</FieldLabel>
+                  <StyledFieldLabel>Currency</StyledFieldLabel>
                   <NativeSelectRoot>
                     <NativeSelectField
                       name="currency"
@@ -293,7 +435,7 @@ export default function CreateGamePage() {
 
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                 <FieldRoot>
-                  <FieldLabel>Skill Level</FieldLabel>
+                  <StyledFieldLabel>Skill Level</StyledFieldLabel>
                   <NativeSelectRoot>
                     <NativeSelectField
                       name="skillLevel"
@@ -308,7 +450,7 @@ export default function CreateGamePage() {
                   </NativeSelectRoot>
                 </FieldRoot>
                 <FieldRoot>
-                  <FieldLabel>Cancellation Rule</FieldLabel>
+                  <StyledFieldLabel>Cancellation Rule</StyledFieldLabel>
                   <NativeSelectRoot>
                     <NativeSelectField
                       name="cancellationRule"
@@ -327,7 +469,7 @@ export default function CreateGamePage() {
               </SimpleGrid>
 
               <FieldRoot>
-                <FieldLabel>Rules</FieldLabel>
+                <StyledFieldLabel>Rules</StyledFieldLabel>
                 <TextArea
                   name="rules"
                   value={formData.rules}
@@ -338,7 +480,7 @@ export default function CreateGamePage() {
               </FieldRoot>
 
               <FieldRoot>
-                <FieldLabel>Host Information</FieldLabel>
+                <StyledFieldLabel>Host Information</StyledFieldLabel>
                 <TextArea
                   name="hostInfo"
                   value={formData.hostInfo}
@@ -349,7 +491,7 @@ export default function CreateGamePage() {
               </FieldRoot>
 
               <FieldRoot>
-                <FieldLabel>Cancellation Policy</FieldLabel>
+                <StyledFieldLabel>Cancellation Policy</StyledFieldLabel>
                 <TextArea
                   name="cancellationPolicy"
                   value={formData.cancellationPolicy}
@@ -368,9 +510,9 @@ export default function CreateGamePage() {
                     onChange={handleInputChange}
                     id="isPublic"
                   />
-                  <FieldLabel htmlFor="isPublic" mb={0}>
+                  <StyledFieldLabel htmlFor="isPublic" mb={0}>
                     Make this game public
-                  </FieldLabel>
+                  </StyledFieldLabel>
                 </HStack>
               </FieldRoot>
 
@@ -390,6 +532,8 @@ export default function CreateGamePage() {
           </form>
         </Card>
       </Box>
+      {/* Bottom Navigation */}
+      <BottomNav items={navItems} />
     </Box>
   );
 }

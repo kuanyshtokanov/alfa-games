@@ -36,7 +36,7 @@ export function TextInput({ ...props }: TextInputProps) {
       }}
       borderRadius="md"
       bg="white"
-      color="text.primary"
+      color="gray.900"
       _placeholder={{ color: "gray.400" }}
       {...props}
     />
@@ -59,7 +59,7 @@ export function TextArea({ ...props }: TextAreaProps) {
       }}
       borderRadius="md"
       bg="white"
-      color="text.primary"
+      color="gray.900"
       _placeholder={{ color: "gray.400" }}
       {...props}
     />

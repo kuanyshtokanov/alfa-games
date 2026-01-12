@@ -26,6 +26,10 @@ import { PrimaryButton, SecondaryButton } from "@/components/ui/Button";
 import { TextInput, TextArea } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { StatusTag } from "@/components/ui/StatusTag";
+import { BottomNav } from "@/components/ui/BottomNav";
+import { getBottomNavItems } from "@/lib/navigation";
+import { getCurrentUserRole } from "@/lib/utils/rbac-client";
+import { StyledFieldLabel } from "@/components/ui/FieldLabel";
 import type { Game } from "@/types/game";
 
 export default function GameDetailPage() {
@@ -38,12 +42,24 @@ export default function GameDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Game>>({});
+  const [navItems, setNavItems] = useState(getBottomNavItems());
 
   const gameId = params.id as string;
 
   useEffect(() => {
     if (user && gameId) {
       fetchGame();
+      // Update navigation items based on user role
+      getCurrentUserRole(user).then((userRole) => {
+        if (userRole) {
+          setNavItems(
+            getBottomNavItems(
+              userRole.role,
+              userRole.isClubManager || false
+            )
+          );
+        }
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, gameId]);
@@ -229,43 +245,37 @@ export default function GameDetailPage() {
     return parts.join(", ");
   };
 
-  // Check if current user is the host
-  const [isHost, setIsHost] = useState(false);
+  // Check if current user can manage this game (host, admin, or club manager)
+  const [canManage, setCanManage] = useState(false);
 
   useEffect(() => {
-    const checkHost = async () => {
+    const checkPermissions = async () => {
       if (!user || !game) {
-        setIsHost(false);
+        setCanManage(false);
         return;
       }
 
       try {
         const token = await user.getIdToken();
-        const userResponse = await fetch("/api/auth/me", {
+        const response = await fetch(`/api/games/${gameId}/can-manage`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          const mongoUserId = String(userData.user.id);
-          // Handle both populated object and string ID
-          let hostId = "";
-          if (typeof game.hostId === "string") {
-            hostId = String(game.hostId);
-          } else if (game.hostId && typeof game.hostId === "object") {
-            hostId = String(game.hostId._id || game.hostId.id || "");
-          }
-          setIsHost(hostId === mongoUserId);
+        if (response.ok) {
+          const data = await response.json();
+          setCanManage(data.canManage || false);
+        } else {
+          setCanManage(false);
         }
       } catch {
-        setIsHost(false);
+        setCanManage(false);
       }
     };
 
-    checkHost();
-  }, [user, game]);
+    checkPermissions();
+  }, [user, game, gameId]);
 
   if (!user) {
     return null;
@@ -297,12 +307,12 @@ export default function GameDetailPage() {
   }
 
   return (
-    <Box minH="100vh" bg="bg.secondary">
+    <Box minH="100vh" bg="bg.secondary" pb={20}>
       <Header
         title={isEditing ? "Edit Game" : "Game Details"}
         showBackButton
         rightContent={
-          isHost &&
+          canManage &&
           !isEditing && (
             <HStack gap={2}>
               <SecondaryButton size="sm" onClick={() => setIsEditing(true)}>
@@ -334,7 +344,7 @@ export default function GameDetailPage() {
           {isEditing ? (
             <VStack gap={6} align="stretch">
               <FieldRoot required>
-                <FieldLabel>Game Title</FieldLabel>
+                <StyledFieldLabel>Game Title</StyledFieldLabel>
                 <TextInput
                   name="title"
                   value={formData.title || ""}
@@ -343,7 +353,7 @@ export default function GameDetailPage() {
               </FieldRoot>
 
               <FieldRoot>
-                <FieldLabel>Description</FieldLabel>
+                <StyledFieldLabel>Description</StyledFieldLabel>
                 <TextArea
                   name="description"
                   value={formData.description || ""}
@@ -353,9 +363,15 @@ export default function GameDetailPage() {
               </FieldRoot>
 
               <VStack align="stretch" gap={4}>
-                <Heading size="md">Location</Heading>
+                <Heading
+                  size="md"
+                  color="gray.900"
+                  fontFamily="var(--font-inter), sans-serif"
+                >
+                  Location
+                </Heading>
                 <FieldRoot required>
-                  <FieldLabel>Address</FieldLabel>
+                  <StyledFieldLabel>Address</StyledFieldLabel>
                   <TextInput
                     name="location.address"
                     value={formData.location?.address || ""}
@@ -364,7 +380,7 @@ export default function GameDetailPage() {
                 </FieldRoot>
                 <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                   <FieldRoot>
-                    <FieldLabel>City</FieldLabel>
+                    <StyledFieldLabel>City</StyledFieldLabel>
                     <TextInput
                       name="location.city"
                       value={formData.location?.city || ""}
@@ -372,7 +388,7 @@ export default function GameDetailPage() {
                     />
                   </FieldRoot>
                   <FieldRoot>
-                    <FieldLabel>Country</FieldLabel>
+                    <StyledFieldLabel>Country</StyledFieldLabel>
                     <TextInput
                       name="location.country"
                       value={formData.location?.country || ""}
@@ -384,7 +400,7 @@ export default function GameDetailPage() {
 
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                 <FieldRoot required>
-                  <FieldLabel>Date & Time</FieldLabel>
+                  <StyledFieldLabel>Date & Time</StyledFieldLabel>
                   <TextInput
                     name="datetime"
                     type="datetime-local"
@@ -399,7 +415,7 @@ export default function GameDetailPage() {
                   />
                 </FieldRoot>
                 <FieldRoot required>
-                  <FieldLabel>Duration (minutes)</FieldLabel>
+                  <StyledFieldLabel>Duration (minutes)</StyledFieldLabel>
                   <TextInput
                     name="duration"
                     type="number"
@@ -412,7 +428,7 @@ export default function GameDetailPage() {
 
               <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
                 <FieldRoot required>
-                  <FieldLabel>Max Players</FieldLabel>
+                  <StyledFieldLabel>Max Players</StyledFieldLabel>
                   <TextInput
                     name="maxPlayers"
                     type="number"
@@ -422,7 +438,7 @@ export default function GameDetailPage() {
                   />
                 </FieldRoot>
                 <FieldRoot required>
-                  <FieldLabel>Price</FieldLabel>
+                  <StyledFieldLabel>Price</StyledFieldLabel>
                   <TextInput
                     name="price"
                     type="number"
@@ -433,7 +449,7 @@ export default function GameDetailPage() {
                   />
                 </FieldRoot>
                 <FieldRoot required>
-                  <FieldLabel>Currency</FieldLabel>
+                  <StyledFieldLabel>Currency</StyledFieldLabel>
                   <NativeSelectRoot>
                     <NativeSelectField
                       name="currency"
@@ -451,7 +467,7 @@ export default function GameDetailPage() {
 
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                 <FieldRoot>
-                  <FieldLabel>Skill Level</FieldLabel>
+                  <StyledFieldLabel>Skill Level</StyledFieldLabel>
                   <NativeSelectRoot>
                     <NativeSelectField
                       name="skillLevel"
@@ -466,7 +482,7 @@ export default function GameDetailPage() {
                   </NativeSelectRoot>
                 </FieldRoot>
                 <FieldRoot>
-                  <FieldLabel>Status</FieldLabel>
+                  <StyledFieldLabel>Status</StyledFieldLabel>
                   <NativeSelectRoot>
                     <NativeSelectField
                       name="status"
@@ -506,7 +522,13 @@ export default function GameDetailPage() {
             <VStack gap={6} align="stretch">
               <HStack justify="space-between" align="start">
                 <VStack align="start" gap={2}>
-                  <Heading size="lg">{game.title}</Heading>
+                  <Heading
+                    size="lg"
+                    color="gray.900"
+                    fontFamily="var(--font-inter), sans-serif"
+                  >
+                    {game.title}
+                  </Heading>
                   {getStatusTag(game.status)}
                 </VStack>
               </HStack>
@@ -515,10 +537,10 @@ export default function GameDetailPage() {
                 <>
                   <Separator />
                   <VStack align="start" gap={2}>
-                    <Heading size="sm" color="text.secondary">
+                    <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                       Description
                     </Heading>
-                    <Text>{game.description}</Text>
+                    <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.description}</Text>
                   </VStack>
                 </>
               )}
@@ -526,51 +548,51 @@ export default function GameDetailPage() {
               <Separator />
 
               <VStack align="start" gap={2}>
-                <Heading size="sm" color="text.secondary">
+                <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                   Date & Time
                 </Heading>
-                <Text>{formatDate(game.datetime)}</Text>
+                <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{formatDate(game.datetime)}</Text>
               </VStack>
 
               <Separator />
 
               <VStack align="start" gap={2}>
-                <Heading size="sm" color="text.secondary">
+                <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                   Location
                 </Heading>
-                <Text>{formatLocation(game.location)}</Text>
+                <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{formatLocation(game.location)}</Text>
               </VStack>
 
               <Separator />
 
               <SimpleGrid columns={2} gap={4}>
                 <VStack align="start" gap={2}>
-                  <Heading size="sm" color="text.secondary">
+                  <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                     Duration
                   </Heading>
-                  <Text>{game.duration} minutes</Text>
+                  <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.duration} minutes</Text>
                 </VStack>
                 <VStack align="start" gap={2}>
-                  <Heading size="sm" color="text.secondary">
+                  <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                     Players
                   </Heading>
-                  <Text>
+                  <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">
                     {game.currentPlayersCount} / {game.maxPlayers}
                   </Text>
                 </VStack>
                 <VStack align="start" gap={2}>
-                  <Heading size="sm" color="text.secondary">
+                  <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                     Price
                   </Heading>
-                  <Text>
+                  <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">
                     {game.price} {game.currency}
                   </Text>
                 </VStack>
                 <VStack align="start" gap={2}>
-                  <Heading size="sm" color="text.secondary">
+                  <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                     Skill Level
                   </Heading>
-                  <Text>{game.skillLevel}</Text>
+                  <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.skillLevel}</Text>
                 </VStack>
               </SimpleGrid>
 
@@ -578,10 +600,10 @@ export default function GameDetailPage() {
                 <>
                   <Separator />
                   <VStack align="start" gap={2}>
-                    <Heading size="sm" color="text.secondary">
+                    <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                       Rules
                     </Heading>
-                    <Text>{game.rules}</Text>
+                    <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.rules}</Text>
                   </VStack>
                 </>
               )}
@@ -590,10 +612,10 @@ export default function GameDetailPage() {
                 <>
                   <Separator />
                   <VStack align="start" gap={2}>
-                    <Heading size="sm" color="text.secondary">
+                    <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                       Host Information
                     </Heading>
-                    <Text>{game.hostInfo}</Text>
+                    <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.hostInfo}</Text>
                   </VStack>
                 </>
               )}
@@ -602,10 +624,10 @@ export default function GameDetailPage() {
                 <>
                   <Separator />
                   <VStack align="start" gap={2}>
-                    <Heading size="sm" color="text.secondary">
+                    <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
                       Cancellation Policy
                     </Heading>
-                    <Text>{game.cancellationPolicy}</Text>
+                    <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.cancellationPolicy}</Text>
                   </VStack>
                 </>
               )}
@@ -613,6 +635,8 @@ export default function GameDetailPage() {
           )}
         </Card>
       </Box>
+      {/* Bottom Navigation */}
+      <BottomNav items={navItems} />
     </Box>
   );
 }

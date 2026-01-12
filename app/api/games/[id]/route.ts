@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/utils/api-auth';
-import connectDB from '@/lib/mongodb/connect';
-import Game from '@/lib/mongodb/models/Game';
-import { z } from 'zod';
-import mongoose from 'mongoose';
+import { NextRequest, NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/lib/utils/api-auth";
+import { canManageGame } from "@/lib/utils/rbac";
+import connectDB from "@/lib/mongodb/connect";
+import Game from "@/lib/mongodb/models/Game";
+import { z } from "zod";
+import mongoose from "mongoose";
 
 // Validation schema for updating games
 const updateGameSchema = z.object({
@@ -26,8 +27,10 @@ const updateGameSchema = z.object({
   duration: z.number().min(1).optional(),
   maxPlayers: z.number().min(1).optional(),
   price: z.number().min(0).optional(),
-  currency: z.enum(['KZT', 'USD', 'EUR', 'RUB']).optional(),
-  skillLevel: z.enum(['beginner', 'intermediate', 'advanced', 'all']).optional(),
+  currency: z.enum(["KZT", "USD", "EUR", "RUB"]).optional(),
+  skillLevel: z
+    .enum(["beginner", "intermediate", "advanced", "all"])
+    .optional(),
   equipment: z
     .object({
       provided: z.array(z.string()),
@@ -38,50 +41,48 @@ const updateGameSchema = z.object({
   hostInfo: z.string().optional(),
   cancellationPolicy: z.string().optional(),
   cancellationRule: z
-    .enum(['anytime', '24hours', '48hours', '72hours', 'no_refund', 'custom'])
+    .enum(["anytime", "24hours", "48hours", "72hours", "no_refund", "custom"])
     .optional(),
   isPublic: z.boolean().optional(),
   clubId: z.string().optional(),
-  status: z.enum(['upcoming', 'cancelled', 'completed']).optional(),
+  status: z.enum(["upcoming", "cancelled", "completed"]).optional(),
 });
 
 // GET /api/games/[id] - Get a single game
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { error: 'Invalid game ID' },
-        { status: 400 }
-      );
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
     }
 
-    const game = await Game.findById(params.id)
-      .populate('hostId', 'name email avatar')
-      .populate('clubId', 'name')
+    const game = await Game.findById(id)
+      .populate("hostId", "name email avatar")
+      .populate("clubId", "name")
       .lean();
 
     if (!game) {
-      return NextResponse.json(
-        { error: 'Game not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
     return NextResponse.json(
       {
         success: true,
         game: {
-          id: game._id,
+          id: game._id.toString(),
           hostId: game.hostId,
           title: game.title,
           description: game.description,
           location: game.location,
-          datetime: game.datetime,
+          datetime:
+            game.datetime instanceof Date
+              ? game.datetime.toISOString()
+              : game.datetime,
           duration: game.duration,
           maxPlayers: game.maxPlayers,
           currentPlayersCount: game.currentPlayersCount,
@@ -96,17 +97,26 @@ export async function GET(
           isPublic: game.isPublic,
           clubId: game.clubId,
           status: game.status,
-          createdAt: game.createdAt,
-          updatedAt: game.updatedAt,
+          createdAt:
+            game.createdAt instanceof Date
+              ? game.createdAt.toISOString()
+              : game.createdAt,
+          updatedAt:
+            game.updatedAt instanceof Date
+              ? game.updatedAt.toISOString()
+              : game.updatedAt,
         },
       },
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error('Error fetching game:', error);
+    console.error("Error fetching game:", error);
     const err = error as { message?: string };
     return NextResponse.json(
-      { error: 'Internal server error', message: err.message || 'Unknown error' },
+      {
+        error: "Internal server error",
+        message: err.message || "Unknown error",
+      },
       { status: 500 }
     );
   }
@@ -115,41 +125,35 @@ export async function GET(
 // PATCH /api/games/[id] - Update a game
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
+    const { id } = await params;
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { error: 'Invalid game ID' },
-        { status: 400 }
-      );
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
     }
 
-    const game = await Game.findById(params.id);
+    const game = await Game.findById(id);
     if (!game) {
-      return NextResponse.json(
-        { error: 'Game not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
-    // Check if user is the host or admin
-    if (
-      game.hostId.toString() !== user._id.toString() &&
-      user.role !== 'admin'
-    ) {
+    // Check if user can manage this game (host, admin, or club manager)
+    const canManage = await canManageGame(user, game);
+    if (!canManage) {
       return NextResponse.json(
-        { error: 'Forbidden - You can only edit your own games' },
+        {
+          error: "Forbidden",
+          message:
+            "You can only edit games you host or manage through your club",
+        },
         { status: 403 }
       );
     }
@@ -159,7 +163,9 @@ export async function PATCH(
 
     // Convert datetime string to Date if provided
     if (validatedData.datetime) {
-      validatedData.datetime = new Date(validatedData.datetime) as unknown as string;
+      validatedData.datetime = new Date(
+        validatedData.datetime
+      ) as unknown as string;
     }
 
     // Update game
@@ -167,20 +173,23 @@ export async function PATCH(
     await game.save();
 
     const populatedGame = await Game.findById(game._id)
-      .populate('hostId', 'name email avatar')
-      .populate('clubId', 'name')
+      .populate("hostId", "name email avatar")
+      .populate("clubId", "name")
       .lean();
 
     return NextResponse.json(
       {
         success: true,
         game: {
-          id: populatedGame!._id,
+          id: populatedGame!._id.toString(),
           hostId: populatedGame!.hostId,
           title: populatedGame!.title,
           description: populatedGame!.description,
           location: populatedGame!.location,
-          datetime: populatedGame!.datetime,
+          datetime:
+            populatedGame!.datetime instanceof Date
+              ? populatedGame!.datetime.toISOString()
+              : populatedGame!.datetime,
           duration: populatedGame!.duration,
           maxPlayers: populatedGame!.maxPlayers,
           currentPlayersCount: populatedGame!.currentPlayersCount,
@@ -195,23 +204,32 @@ export async function PATCH(
           isPublic: populatedGame!.isPublic,
           clubId: populatedGame!.clubId,
           status: populatedGame!.status,
-          createdAt: populatedGame!.createdAt,
-          updatedAt: populatedGame!.updatedAt,
+          createdAt:
+            populatedGame!.createdAt instanceof Date
+              ? populatedGame!.createdAt.toISOString()
+              : populatedGame!.createdAt,
+          updatedAt:
+            populatedGame!.updatedAt instanceof Date
+              ? populatedGame!.updatedAt.toISOString()
+              : populatedGame!.updatedAt,
         },
       },
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error('Error updating game:', error);
+    console.error("Error updating game:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.issues },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
     const err = error as { message?: string };
     return NextResponse.json(
-      { error: 'Internal server error', message: err.message || 'Unknown error' },
+      {
+        error: "Internal server error",
+        message: err.message || "Unknown error",
+      },
       { status: 500 }
     );
   }
@@ -220,58 +238,54 @@ export async function PATCH(
 // DELETE /api/games/[id] - Delete a game
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getAuthenticatedUser(request);
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
+    const { id } = await params;
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { error: 'Invalid game ID' },
-        { status: 400 }
-      );
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid game ID" }, { status: 400 });
     }
 
-    const game = await Game.findById(params.id);
+    const game = await Game.findById(id);
     if (!game) {
-      return NextResponse.json(
-        { error: 'Game not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
-    // Check if user is the host or admin
-    if (
-      game.hostId.toString() !== user._id.toString() &&
-      user.role !== 'admin'
-    ) {
+    // Check if user can manage this game (host, admin, or club manager)
+    const canManage = await canManageGame(user, game);
+    if (!canManage) {
       return NextResponse.json(
-        { error: 'Forbidden - You can only delete your own games' },
+        {
+          error: "Forbidden",
+          message:
+            "You can only delete games you host or manage through your club",
+        },
         { status: 403 }
       );
     }
 
-    await Game.findByIdAndDelete(params.id);
+    await Game.findByIdAndDelete(id);
 
     return NextResponse.json(
-      { success: true, message: 'Game deleted successfully' },
+      { success: true, message: "Game deleted successfully" },
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error('Error deleting game:', error);
+    console.error("Error deleting game:", error);
     const err = error as { message?: string };
     return NextResponse.json(
-      { error: 'Internal server error', message: err.message || 'Unknown error' },
+      {
+        error: "Internal server error",
+        message: err.message || "Unknown error",
+      },
       { status: 500 }
     );
   }
 }
-

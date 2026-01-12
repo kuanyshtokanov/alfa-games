@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/utils/api-auth';
+import { getUserManagedClubs } from '@/lib/utils/rbac';
 
 // GET /api/auth/me - Get current authenticated user
 export async function GET(request: NextRequest) {
@@ -12,16 +13,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check if user is a club manager
+    const managedClubs = await getUserManagedClubs(user);
+    const isClubManager = managedClubs.length > 0;
+
     return NextResponse.json(
       {
         success: true,
         user: {
-          id: user._id,
+          id: user._id.toString(),
           firebaseUID: user.firebaseUID,
           email: user.email,
           name: user.name,
           avatar: user.avatar,
           role: user.role,
+          isClubManager,
         },
       },
       { status: 200 }

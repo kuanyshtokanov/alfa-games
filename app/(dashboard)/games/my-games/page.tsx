@@ -16,6 +16,9 @@ import {
 import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/Button';
 import { EventCard, Card } from '@/components/ui/Card';
+import { BottomNav } from '@/components/ui/BottomNav';
+import { getBottomNavItems } from '@/lib/navigation';
+import { getCurrentUserRole, canUserCreateGame } from '@/lib/utils/rbac-client';
 import type { Game } from '@/types/game';
 
 export default function MyGamesPage() {
@@ -24,13 +27,39 @@ export default function MyGamesPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [canCreate, setCanCreate] = useState(false);
+  const [navItems, setNavItems] = useState(getBottomNavItems());
 
   useEffect(() => {
     if (user) {
       fetchGames();
+      checkCreatePermission();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const checkCreatePermission = async () => {
+    if (!user) {
+      setCanCreate(false);
+      return;
+    }
+
+    try {
+      const userRole = await getCurrentUserRole(user);
+      setCanCreate(canUserCreateGame(userRole));
+      // Update navigation items based on user role
+      if (userRole) {
+        setNavItems(
+          getBottomNavItems(
+            userRole.role,
+            userRole.isClubManager || false
+          )
+        );
+      }
+    } catch {
+      setCanCreate(false);
+    }
+  };
 
   const fetchGames = async () => {
     if (!user) return;
@@ -108,16 +137,18 @@ export default function MyGamesPage() {
   }
 
   return (
-    <Box minH="100vh" bg="bg.secondary">
+    <Box minH="100vh" bg="bg.secondary" pb={20}>
       <Header
         title="My Games"
         rightContent={
-          <PrimaryButton
-            size="sm"
-            onClick={() => router.push('/games/create')}
-          >
-            Create Game
-          </PrimaryButton>
+          canCreate && (
+            <PrimaryButton
+              size="sm"
+              onClick={() => router.push('/games/create')}
+            >
+              Create Game
+            </PrimaryButton>
+          )
         }
       />
       <Box p={4} maxW="1200px" mx="auto">
@@ -135,12 +166,14 @@ export default function MyGamesPage() {
         ) : games.length === 0 ? (
           <Card>
             <VStack gap={4} py={8}>
-              <Text color="text.secondary" fontSize="lg">
+              <Text color="gray.400" fontSize="lg" fontFamily="var(--font-inter), sans-serif">
                 You haven&apos;t created any games yet
               </Text>
-              <PrimaryButton onClick={() => router.push('/games/create')}>
-                Create Your First Game
-              </PrimaryButton>
+              {canCreate && (
+                <PrimaryButton onClick={() => router.push('/games/create')}>
+                  Create Your First Game
+                </PrimaryButton>
+              )}
             </VStack>
           </Card>
         ) : (
@@ -167,6 +200,8 @@ export default function MyGamesPage() {
           </VStack>
         )}
       </Box>
+      {/* Bottom Navigation */}
+      <BottomNav items={navItems} />
     </Box>
   );
 }

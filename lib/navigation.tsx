@@ -3,11 +3,13 @@
  * 
  * Centralized configuration for bottom navigation items
  * Used across the application for consistent navigation
+ * Supports role-based navigation items
  */
 
 import { BottomNavItem } from "@/components/ui/BottomNav";
 
-export const bottomNavItems: BottomNavItem[] = [
+// Base navigation items available to all users
+const baseNavItems: BottomNavItem[] = [
   {
     label: "Home",
     href: "/games",
@@ -25,6 +27,10 @@ export const bottomNavItems: BottomNavItem[] = [
       </svg>
     ),
   },
+];
+
+// Navigation items for hosts and club managers
+const hostNavItems: BottomNavItem[] = [
   {
     label: "My Events",
     href: "/games/my-games",
@@ -44,6 +50,32 @@ export const bottomNavItems: BottomNavItem[] = [
       </svg>
     ),
   },
+];
+
+// Navigation items for admins
+const adminNavItems: BottomNavItem[] = [
+  {
+    label: "Admin",
+    href: "/admin",
+    icon: (
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" />
+        <path d="M2 12l10 5 10-5" />
+      </svg>
+    ),
+  },
+];
+
+// Common navigation items (always shown)
+const commonNavItems: BottomNavItem[] = [
   {
     label: "Profile",
     href: "/profile",
@@ -61,4 +93,41 @@ export const bottomNavItems: BottomNavItem[] = [
       </svg>
     ),
   },
+];
+
+/**
+ * Get navigation items based on user role
+ * @param role - User role: 'player', 'host', or 'admin'
+ * @param isClubManager - Whether the user is a club manager
+ * @returns Array of navigation items for the user
+ */
+export function getBottomNavItems(
+  role?: "player" | "host" | "admin" | null,
+  isClubManager: boolean = false
+): BottomNavItem[] {
+  const items: BottomNavItem[] = [...baseNavItems];
+
+  // Add role-specific items
+  if (role === "admin") {
+    // Admins get admin nav item
+    items.push(...adminNavItems);
+  } else if (role === "host" || isClubManager) {
+    // Hosts and club managers get "My Events" nav item
+    items.push(...hostNavItems);
+  }
+
+  // Always add common items (Profile) at the end
+  items.push(...commonNavItems);
+
+  return items;
+}
+
+/**
+ * Default navigation items (for backwards compatibility)
+ * Shows base items + "My Events" + Profile
+ */
+export const bottomNavItems: BottomNavItem[] = [
+  ...baseNavItems,
+  ...hostNavItems,
+  ...commonNavItems,
 ];

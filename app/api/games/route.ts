@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/utils/api-auth";
+import { canCreateGame } from "@/lib/utils/rbac";
 import connectDB from "@/lib/mongodb/connect";
 import Game from "@/lib/mongodb/models/Game";
 import { z } from "zod";
@@ -86,12 +87,14 @@ export async function GET(request: NextRequest) {
       {
         success: true,
         games: games.map((game) => ({
-          id: game._id,
+          id: game._id.toString(),
           hostId: game.hostId,
           title: game.title,
           description: game.description,
           location: game.location,
-          datetime: game.datetime,
+          datetime: game.datetime instanceof Date 
+            ? game.datetime.toISOString() 
+            : game.datetime,
           duration: game.duration,
           maxPlayers: game.maxPlayers,
           currentPlayersCount: game.currentPlayersCount,
@@ -106,8 +109,12 @@ export async function GET(request: NextRequest) {
           isPublic: game.isPublic,
           clubId: game.clubId,
           status: game.status,
-          createdAt: game.createdAt,
-          updatedAt: game.updatedAt,
+          createdAt: game.createdAt instanceof Date 
+            ? game.createdAt.toISOString() 
+            : game.createdAt,
+          updatedAt: game.updatedAt instanceof Date 
+            ? game.updatedAt.toISOString() 
+            : game.updatedAt,
         })),
       },
       { status: 200 }
@@ -133,6 +140,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if user can create games (host, admin, or club manager)
+    const canCreate = await canCreateGame(user);
+    if (!canCreate) {
+      return NextResponse.json(
+        { 
+          error: "Forbidden", 
+          message: "Only hosts, admins, and club managers can create games" 
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const validatedData = gameSchema.parse(body);
 
@@ -156,12 +175,14 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         game: {
-          id: populatedGame!._id,
+          id: populatedGame!._id.toString(),
           hostId: populatedGame!.hostId,
           title: populatedGame!.title,
           description: populatedGame!.description,
           location: populatedGame!.location,
-          datetime: populatedGame!.datetime,
+          datetime: populatedGame!.datetime instanceof Date 
+            ? populatedGame!.datetime.toISOString() 
+            : populatedGame!.datetime,
           duration: populatedGame!.duration,
           maxPlayers: populatedGame!.maxPlayers,
           currentPlayersCount: populatedGame!.currentPlayersCount,
@@ -176,8 +197,12 @@ export async function POST(request: NextRequest) {
           isPublic: populatedGame!.isPublic,
           clubId: populatedGame!.clubId,
           status: populatedGame!.status,
-          createdAt: populatedGame!.createdAt,
-          updatedAt: populatedGame!.updatedAt,
+          createdAt: populatedGame!.createdAt instanceof Date 
+            ? populatedGame!.createdAt.toISOString() 
+            : populatedGame!.createdAt,
+          updatedAt: populatedGame!.updatedAt instanceof Date 
+            ? populatedGame!.updatedAt.toISOString() 
+            : populatedGame!.updatedAt,
         },
       },
       { status: 201 }

@@ -12,6 +12,10 @@ export type { ButtonProps } from "./Button";
 export { TextInput, TextArea, SearchInput } from "./Input";
 export type { TextInputProps, TextAreaProps } from "./Input";
 
+// Field Label
+export { StyledFieldLabel } from "./FieldLabel";
+export type { StyledFieldLabelProps } from "./FieldLabel";
+
 // Cards
 export { Card, EventCard } from "./Card";
 export type { CardProps, EventCardProps } from "./Card";

@@ -15,7 +15,8 @@ import {
 import { FilterButton } from "@/components/ui/FilterButton";
 import { EventCard } from "@/components/ui/Card";
 import { BottomNav } from "@/components/ui/BottomNav";
-import { bottomNavItems } from "@/lib/navigation";
+import { getBottomNavItems } from "@/lib/navigation";
+import { getCurrentUserRole } from "@/lib/utils/rbac-client";
 import {
   formatGameDate,
   formatGameLocation,
@@ -32,6 +33,7 @@ export default function FindMatchPage() {
   const [loading, setLoading] = useState(true);
   const [selectedSport, setSelectedSport] = useState<SportFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [navItems, setNavItems] = useState(getBottomNavItems());
 
   const fetchGames = useCallback(async () => {
     if (!user) return;
@@ -63,6 +65,17 @@ export default function FindMatchPage() {
   useEffect(() => {
     if (user) {
       fetchGames();
+      // Update navigation items based on user role
+      getCurrentUserRole(user).then((userRole) => {
+        if (userRole) {
+          setNavItems(
+            getBottomNavItems(
+              userRole.role,
+              userRole.isClubManager || false
+            )
+          );
+        }
+      });
     }
   }, [user, fetchGames]);
 
@@ -262,8 +275,8 @@ export default function FindMatchPage() {
         )}
       </Box>
 
-      {/* Bottom Navigation */}
-      <BottomNav items={bottomNavItems} />
+            {/* Bottom Navigation */}
+            <BottomNav items={navItems} />
     </Box>
   );
 }
