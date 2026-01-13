@@ -8,13 +8,13 @@ import {
   VStack,
   HStack,
   Text,
-  Input,
   Spinner,
   Center,
 } from "@chakra-ui/react";
 import { FilterButton } from "@/components/ui/FilterButton";
 import { EventCard } from "@/components/ui/Card";
 import { BottomNav } from "@/components/ui/BottomNav";
+import { GreenHeader } from "@/components/ui/GreenHeader";
 import { getBottomNavItems } from "@/lib/navigation";
 import { getCurrentUserRole } from "@/lib/utils/rbac-client";
 import {
@@ -103,88 +103,18 @@ export default function FindMatchPage() {
   return (
     <Box minH="100vh" bg="#F8F8F8" pb={20}>
       {/* Green Header */}
-      <Box bg="#3CB371" px={4} pt={12} pb={4}>
-        <Text
-          fontSize="28px"
-          fontWeight="600"
-          color="#FFFFFF"
-          fontFamily="var(--font-inter), sans-serif"
-          mb={4}
-        >
-          Find a Match
-        </Text>
-
-        {/* Search Bar */}
-        <Box position="relative">
-          <svg
-            style={{
-              position: "absolute",
-              left: "16px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: "20px",
-              height: "20px",
-              zIndex: 1,
-              pointerEvents: "none",
-            }}
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <path
-              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-              stroke="#9CA3AF"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <Input
-            placeholder="Search by location or title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            pl={12}
-            pr={12}
-            py={3}
-            h="48px"
-            w="full"
-            bg="#FFFFFF"
-            borderColor="#E5E7EB"
-            borderWidth="1px"
-            borderRadius="3xl"
-            fontSize="14px"
-            fontWeight="500"
-            color="#111827"
-            fontFamily="var(--font-inter), sans-serif"
-            _placeholder={{ color: "#9CA3AF" }}
-            _focus={{
-              borderColor: "#3CB371",
-              boxShadow: "0 0 0 1px #3CB371",
-            }}
-          />
-          <Box
-            position="absolute"
-            right={4}
-            top="50%"
-            transform="translateY(-50%)"
-            cursor="pointer"
-          >
-            <svg
-              width="20px"
-              height="20px"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#9CA3AF"
-              strokeWidth="2"
-            >
-              <line x1="4" y1="6" x2="20" y2="6" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <line x1="4" y1="18" x2="20" y2="18" />
-              <line x1="6" y1="4" x2="6" y2="20" />
-              <line x1="18" y1="4" x2="18" y2="20" />
-            </svg>
-          </Box>
-        </Box>
-      </Box>
+      <GreenHeader
+        title="Find a Match"
+        showSearch
+        searchValue={searchQuery}
+        searchPlaceholder="Search by location or title..."
+        onSearchChange={setSearchQuery}
+        showFilter
+        onFilterClick={() => {
+          // TODO: Implement filter functionality
+          console.log("Filter clicked");
+        }}
+      />
 
       {/* Sport Filters */}
       <Box px={4} py={4} bg="#FFFFFF">

@@ -68,11 +68,11 @@ export default function ManageGamesPage() {
 
       // Only admins and hosts can access this page
       if (role && role.role !== "admin" && role.role !== "host") {
-        router.push("/admin/games/my-games");
+        router.push("/my-events");
       }
     } catch (err) {
       console.error("Error checking permissions:", err);
-      router.push("/admin/games/my-games");
+      router.push("/my-events");
     }
   };
 

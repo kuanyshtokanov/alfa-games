@@ -34,6 +34,7 @@ export type { AvatarProps, AvatarGridProps } from "./Avatar";
 
 // Header
 export { Header } from "./Header";
+export { GreenHeader } from "./GreenHeader";
 export type { HeaderProps } from "./Header";
 
 // Navigation

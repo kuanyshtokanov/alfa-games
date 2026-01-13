@@ -261,28 +261,36 @@ export function EventCard({
             )}
           </VStack>
 
-          {/* Action Button */}
-          {onAction && (
-            <Box pt={1}>
-              <Box
+          {/* Status Tag and View Details */}
+          <HStack justify="space-between" align="center" pt={2}>
+            {statusTag && (
+              <HStack gap={1.5}>
+                <Box w="8px" h="8px" borderRadius="full" bg={statusTagColor} />
+                <Text
+                  fontSize="14px"
+                  fontWeight="500"
+                  color="#111827"
+                  fontFamily="var(--font-inter), sans-serif"
+                >
+                  {statusTag}
+                </Text>
+              </HStack>
+            )}
+            {onAction && actionLabel && (
+              <Text
                 as="button"
                 onClick={onAction}
-                bg={sportColor}
-                color="#FFFFFF"
-                w="full"
-                py={2.5}
-                px={4}
-                borderRadius="lg"
-                fontWeight="600"
                 fontSize="14px"
+                fontWeight="500"
+                color="#9CA3AF"
                 fontFamily="var(--font-inter), sans-serif"
-                _hover={{ opacity: 0.9 }}
-                _active={{ opacity: 0.8 }}
+                _hover={{ color: "#111827" }}
+                cursor="pointer"
               >
                 {actionLabel}
-              </Box>
-            </Box>
-          )}
+              </Text>
+            )}
+          </HStack>
         </VStack>
 
         {/* Price Tag */}

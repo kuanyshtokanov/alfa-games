@@ -1,23 +1,18 @@
 /**
  * Avatar Component
- * 
+ *
  * Reusable avatar component matching Figma design system.
  * Circular avatars with initials or images
  */
 
-'use client';
+"use client";
 
-import {
-  Avatar as ChakraAvatar,
-  AvatarProps as ChakraAvatarProps,
-  AvatarBadge,
-  Box,
-} from '@chakra-ui/react';
+import { AvatarRoot, AvatarImage, AvatarFallback, Box } from "@chakra-ui/react";
 
-export interface AvatarProps extends ChakraAvatarProps {
+export interface AvatarProps {
   name?: string;
   src?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: "sm" | "md" | "lg" | "xl";
   showBadge?: boolean;
   badgeColor?: string;
 }
@@ -29,30 +24,59 @@ export interface AvatarProps extends ChakraAvatarProps {
 export function Avatar({
   name,
   src,
-  size = 'md',
+  size = "md",
   showBadge = false,
-  badgeColor = 'primary.400',
+  badgeColor = "primary.400",
   ...props
 }: AvatarProps) {
-  const sizeMap = {
-    sm: '32px',
-    md: '48px',
-    lg: '64px',
-    xl: '96px',
+  // Get initials from name
+  const getInitials = (name?: string): string => {
+    if (!name) return "?";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) {
+      return parts[0].charAt(0).toUpperCase();
+    }
+    return (
+      parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
+    ).toUpperCase();
   };
 
   return (
-    <ChakraAvatar
-      name={name}
-      src={src}
-      size={size}
-      borderRadius="full"
-      bg={src ? 'transparent' : 'gray.200'}
-      color={src ? 'transparent' : 'text.primary'}
-      {...props}
-    >
-      {showBadge && <AvatarBadge boxSize="1.25em" bg={badgeColor} borderColor="white" />}
-    </ChakraAvatar>
+    <Box position="relative" display="inline-block" {...props}>
+      <AvatarRoot size={size} borderRadius="full">
+        {src && <AvatarImage src={src} alt={name} />}
+        <AvatarFallback
+          bg="gray.200"
+          color="gray.900"
+          fontSize={
+            size === "sm"
+              ? "12px"
+              : size === "md"
+              ? "16px"
+              : size === "lg"
+              ? "20px"
+              : "24px"
+          }
+          fontWeight="600"
+          fontFamily="var(--font-inter), sans-serif"
+        >
+          {getInitials(name)}
+        </AvatarFallback>
+      </AvatarRoot>
+      {showBadge && (
+        <Box
+          position="absolute"
+          bottom="0"
+          right="0"
+          w="1.25em"
+          h="1.25em"
+          borderRadius="full"
+          bg={badgeColor}
+          border="2px solid"
+          borderColor="white"
+        />
+      )}
+    </Box>
   );
 }
 
@@ -63,12 +87,17 @@ export function Avatar({
 export interface AvatarGridProps {
   avatars: Array<{ name?: string; src?: string }>;
   maxVisible?: number;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
 }
 
-export function AvatarGrid({ avatars, maxVisible = 12, size = 'md' }: AvatarGridProps) {
+export function AvatarGrid({
+  avatars,
+  maxVisible = 12,
+  size = "md",
+}: AvatarGridProps) {
   const visibleAvatars = avatars.slice(0, maxVisible);
-  const remaining = avatars.length > maxVisible ? avatars.length - maxVisible : 0;
+  const remaining =
+    avatars.length > maxVisible ? avatars.length - maxVisible : 0;
 
   return (
     <Box display="flex" flexWrap="wrap" gap={2}>
@@ -80,8 +109,8 @@ export function AvatarGrid({ avatars, maxVisible = 12, size = 'md' }: AvatarGrid
           display="flex"
           alignItems="center"
           justifyContent="center"
-          width={size === 'sm' ? '32px' : size === 'md' ? '48px' : '64px'}
-          height={size === 'sm' ? '32px' : size === 'md' ? '48px' : '64px'}
+          width={size === "sm" ? "32px" : size === "md" ? "48px" : "64px"}
+          height={size === "sm" ? "32px" : size === "md" ? "48px" : "64px"}
           borderRadius="full"
           bg="gray.200"
           color="text.secondary"
@@ -94,4 +123,3 @@ export function AvatarGrid({ avatars, maxVisible = 12, size = 'md' }: AvatarGrid
     </Box>
   );
 }
-

@@ -27,13 +27,9 @@ const baseNavItems: BottomNavItem[] = [
       </svg>
     ),
   },
-];
-
-// Navigation items for hosts and club managers
-const hostNavItems: BottomNavItem[] = [
   {
     label: "My Events",
-    href: "/admin/games/my-games",
+    href: "/my-events",
     icon: (
       <svg
         width="24"
@@ -111,10 +107,8 @@ export function getBottomNavItems(
   if (role === "admin") {
     // Admins get admin nav item
     items.push(...adminNavItems);
-  } else if (role === "host" || isClubManager) {
-    // Hosts and club managers get "My Events" nav item
-    items.push(...hostNavItems);
   }
+  // Note: "My Events" is now in baseNavItems, so all users see it
 
   // Always add common items (Profile) at the end
   items.push(...commonNavItems);
@@ -124,10 +118,9 @@ export function getBottomNavItems(
 
 /**
  * Default navigation items (for backwards compatibility)
- * Shows base items + "My Events" + Profile
+ * Shows base items + Profile
  */
 export const bottomNavItems: BottomNavItem[] = [
   ...baseNavItems,
-  ...hostNavItems,
   ...commonNavItems,
 ];
