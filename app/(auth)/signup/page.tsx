@@ -50,7 +50,7 @@ export default function SignupPage() {
 
     try {
       await signUp(email, password, name);
-      router.push("/games/my-games");
+      router.push("/games");
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || "Failed to create account");
@@ -64,7 +64,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      router.push("/games/my-games");
+      router.push("/games");
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || "Failed to sign in with Google");
@@ -78,7 +78,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signInWithFacebook();
-      router.push("/games/my-games");
+      router.push("/games");
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || "Failed to sign in with Facebook");

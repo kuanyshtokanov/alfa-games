@@ -158,13 +158,13 @@ export default function SetRolePage() {
               </Text>
               <VStack align="stretch" gap={2}>
                 <Text fontSize="sm">
-                  • <a href="/games/my-games" style={{ color: "#3CB371" }}>My Games</a> - View your games
+                  • <a href="/admin/games/my-games" style={{ color: "#3CB371" }}>My Games</a> - View your games
                 </Text>
                 <Text fontSize="sm">
-                  • <a href="/games/create" style={{ color: "#3CB371" }}>Create Game</a> - Create a new game (requires host/admin)
+                  • <a href="/admin/games/create" style={{ color: "#3CB371" }}>Create Game</a> - Create a new game (requires host/admin)
                 </Text>
                 <Text fontSize="sm">
-                  • <a href="/games/manage" style={{ color: "#3CB371" }}>Manage Games</a> - Manage all games (requires admin/host)
+                  • <a href="/admin/games/manage" style={{ color: "#3CB371" }}>Manage Games</a> - Manage all games (requires admin/host)
                 </Text>
               </VStack>
             </Box>

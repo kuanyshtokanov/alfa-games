@@ -25,7 +25,7 @@ export function middleware(request: NextRequest) {
 
   // If accessing auth pages while authenticated, redirect to dashboard
   if ((pathname === "/login" || pathname === "/signup") && authToken) {
-    return NextResponse.redirect(new URL("/games/my-games", request.url));
+    return NextResponse.redirect(new URL("/games", request.url));
   }
 
   return NextResponse.next();

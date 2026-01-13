@@ -51,11 +51,11 @@ export default function AdminDashboard() {
 
         // Redirect if not admin
         if (role && role.role !== "admin") {
-          router.push("/games/my-games");
+          router.push("/admin/games/my-games");
         }
       } catch (err) {
         console.error("Error checking role:", err);
-        router.push("/games/my-games");
+        router.push("/admin/games/my-games");
       } finally {
         setLoading(false);
       }
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
     {
       title: "Manage Games",
       description: "View, edit, and delete all games",
-      href: "/games/manage",
+      href: "/admin/games/manage",
       icon: "🎮",
     },
     {
@@ -99,13 +99,13 @@ export default function AdminDashboard() {
     {
       title: "Create Game",
       description: "Create a new game",
-      href: "/games/create",
+      href: "/admin/games/create",
       icon: "➕",
     },
     {
       title: "My Games",
       description: "View your own games",
-      href: "/games/my-games",
+      href: "/admin/games/my-games",
       icon: "📅",
     },
   ];
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
                 </ChakraLink>
                 <ChakraLink
                   as={Link}
-                  href="/games/my-games"
+                  href="/admin/games/my-games"
                   color="primary.400"
                   fontSize="sm"
                   fontFamily="var(--font-inter), sans-serif"

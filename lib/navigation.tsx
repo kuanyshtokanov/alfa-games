@@ -33,7 +33,7 @@ const baseNavItems: BottomNavItem[] = [
 const hostNavItems: BottomNavItem[] = [
   {
     label: "My Events",
-    href: "/games/my-games",
+    href: "/admin/games/my-games",
     icon: (
       <svg
         width="24"

@@ -144,7 +144,7 @@ export default function MyGamesPage() {
           canCreate && (
             <PrimaryButton
               size="sm"
-              onClick={() => router.push('/games/create')}
+              onClick={() => router.push('/admin/games/create')}
             >
               Create Game
             </PrimaryButton>
@@ -170,7 +170,7 @@ export default function MyGamesPage() {
                 You haven&apos;t created any games yet
               </Text>
               {canCreate && (
-                <PrimaryButton onClick={() => router.push('/games/create')}>
+                <PrimaryButton onClick={() => router.push('/admin/games/create')}>
                   Create Your First Game
                 </PrimaryButton>
               )}

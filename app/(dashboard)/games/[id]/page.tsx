@@ -218,7 +218,7 @@ export default function GameDetailPage() {
         throw new Error(data.error || "Failed to delete game");
       }
 
-      router.push("/games/my-games");
+      router.push("/games");
     } catch (err: unknown) {
       const error = err as { message?: string };
       setError(error.message || "Failed to delete game");

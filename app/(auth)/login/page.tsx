@@ -35,7 +35,7 @@ function LoginForm() {
   const { signIn, signInWithGoogle, signInWithFacebook } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/games/my-games";
+  const redirect = searchParams.get("redirect") || "/games";
 
   const validateEmail = (emailValue: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

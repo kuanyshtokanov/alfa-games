@@ -9,16 +9,16 @@
 ### For Hosts, Admins, and Club Managers
 You can access game creation in several ways:
 
-1. **Via "My Games" Page** (`/games/my-games`)
+1. **Via "My Games" Page** (`/admin/games/my-games`)
    - Navigate to "My Events" in the bottom navigation
    - Click the "Create Game" button in the header (if you have permission)
    - Or click "Create Your First Game" if you have no games yet
 
 2. **Direct URL**
-   - Go to `/games/create` directly
+   - Go to `/admin/games/create` directly
    - If you don't have permission, you'll see an error message
 
-3. **Via Games Management Page** (`/games/manage`)
+3. **Via Games Management Page** (`/admin/games/manage`)
    - Only accessible to admins and hosts
    - Shows all games you can manage
    - Includes edit and delete actions
@@ -105,10 +105,10 @@ db.users.updateOne(
 | Page | URL | Access |
 |------|-----|--------|
 | Find a Match | `/games` | All authenticated users |
-| My Games | `/games/my-games` | All authenticated users |
-| Create Game | `/games/create` | Hosts, Admins, Club Managers |
+| My Games | `/admin/games/my-games` | Hosts, Admins, Club Managers |
+| Create Game | `/admin/games/create` | Hosts, Admins, Club Managers |
 | Game Details | `/games/[id]` | All authenticated users |
-| Manage Games | `/games/manage` | Admins, Hosts |
+| Manage Games | `/admin/games/manage` | Admins, Hosts |
 | Admin Dashboard | `/admin` | Admins only |
 | Set User Role | `/admin/set-role` | All users (for self) |
 | Edit Game | `/games/[id]` (edit mode) | Game host, Admin, Club Manager |
@@ -122,9 +122,9 @@ After updating your role to admin in MongoDB:
    
 2. **Navigate to admin pages:**
    - **Admin Dashboard**: `/admin` - Central hub with links to all admin features
-   - **Manage Games**: `/games/manage` - View and manage all games
+   - **Manage Games**: `/admin/games/manage` - View and manage all games
    - **Set Role**: `/admin/set-role` - Update user roles
-   - **Create Game**: `/games/create` - Create new games
+   - **Create Game**: `/admin/games/create` - Create new games
 
 3. **Quick access**: Go directly to `/admin` to see all admin pages in one place
 
@@ -132,7 +132,7 @@ After updating your role to admin in MongoDB:
 
 1. **Set yourself as admin** using one of the methods above
 2. **Refresh the page** to reload your user data
-3. **Navigate to "My Events"** (`/games/my-games`)
+3. **Navigate to "My Events"** (`/admin/games/my-games`)
 4. **Click "Create Game"** - you should now see the form
 5. **Fill out the form** and create a game
 6. **View your game** at `/games/[game-id]`
@@ -150,6 +150,6 @@ After updating your role to admin in MongoDB:
 - If you're a club manager, you should also be able to create games
 - Refresh the page after role changes
 
-**Can't access `/games/manage`**
+**Can't access `/admin/games/manage`**
 - Only admins and hosts can access this page
-- Regular players and club managers are redirected to `/games/my-games`
+- Regular players and club managers are redirected to `/admin/games/my-games`
