@@ -18,11 +18,7 @@ import {
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Button";
-import {
-  formatGameDate,
-  formatGameLocation,
-  formatGamePrice,
-} from "@/lib/utils/game";
+import { formatGameLocation, formatGamePrice } from "@/lib/utils/game";
 import { HiLocationMarker, HiClock, HiShare } from "react-icons/hi";
 import type { Game } from "@/types/game";
 
@@ -49,6 +45,7 @@ export default function GameDetailPage() {
     if (user && gameId) {
       fetchGameData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, gameId]);
 
   const fetchGameData = useCallback(async () => {
@@ -190,9 +187,13 @@ export default function GameDetailPage() {
   }
 
   const spotsLeft = game.maxPlayers - game.currentPlayersCount;
-  const hostInfo = game.hostId as any;
-  const hostName = hostInfo?.name || "Unknown Host";
-  const hostAvatar = hostInfo?.avatar;
+  const hostInfo = game.hostId as { name?: string; avatar?: string } | string;
+  const hostName =
+    typeof hostInfo === "object"
+      ? hostInfo?.name || "Unknown Host"
+      : "Unknown Host";
+  const hostAvatar =
+    typeof hostInfo === "object" ? hostInfo?.avatar : undefined;
 
   // Format date for display
   const gameDate = new Date(game.datetime);
@@ -219,227 +220,112 @@ export default function GameDetailPage() {
       })}`;
 
   return (
-    <Box minH="100vh" bg="#F8F8F8">
-      {/* Banner Image with Back Button and Title */}
-      <Box h="200px" bg="#3CB371" borderRadius="0 0 24px 24px">
-        {/* Back Button */}
-        <IconButton
-          aria-label="Back"
-          position="absolute"
-          top={4}
-          left={4}
-          zIndex={2}
-          bg="rgba(255, 255, 255, 0.2)"
-          color="white"
-          borderRadius="full"
-          onClick={() => router.back()}
-          _hover={{ bg: "rgba(255, 255, 255, 0.3)" }}
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-        </IconButton>
-
-        {/* Title Overlay */}
-        <Box position="relative" top={50} p={6}>
-          <Heading
+    <Box
+      h="100vh"
+      bg="#F8F8F8"
+      display="flex"
+      flexDirection="column"
+      overflow="hidden"
+    >
+      {/* Content Area - Takes up available space and scrolls */}
+      <Box flex={1} overflowY="auto" minH={0} maxH="100%">
+        {/* Banner Image with Back Button and Title */}
+        <Box h="200px" bg="#3CB371" borderRadius="0 0 24px 24px">
+          {/* Back Button */}
+          <IconButton
+            aria-label="Back"
+            position="absolute"
+            top={4}
+            left={4}
+            zIndex={2}
+            bg="rgba(255, 255, 255, 0.2)"
             color="white"
-            fontSize="28px"
-            fontWeight="700"
-            fontFamily="var(--font-inter), sans-serif"
+            borderRadius="full"
+            onClick={() => router.back()}
+            _hover={{ bg: "rgba(255, 255, 255, 0.3)" }}
           >
-            {game.title}
-          </Heading>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </IconButton>
+
+          {/* Title Overlay */}
+          <Box position="relative" top={50} p={6}>
+            <Heading
+              color="white"
+              fontSize="28px"
+              fontWeight="700"
+              fontFamily="var(--font-inter), sans-serif"
+            >
+              {game.title}
+            </Heading>
+          </Box>
         </Box>
-      </Box>
 
-      {/* Location and Date/Time Cards */}
-      <Box px={4} mt={-6} mb={6}>
-        <SimpleGrid columns={2} gap={3}>
-          {/* Location Card */}
-          <Card>
-            <VStack align="flex-start" gap={1}>
-              <HStack gap={1}>
-                <HiLocationMarker size={16} color="#9CA3AF" />
-                <Text
-                  fontSize="12px"
-                  fontWeight="500"
-                  color="#9CA3AF"
-                  fontFamily="var(--font-inter), sans-serif"
-                >
-                  Location
-                </Text>
-              </HStack>
-              <Text
-                fontSize="16px"
-                fontWeight="600"
-                color="#111827"
-                fontFamily="var(--font-inter), sans-serif"
-              >
-                {formatGameLocation(game.location)}
-              </Text>
-            </VStack>
-          </Card>
-
-          {/* Date & Time Card */}
-          <Card>
-            <VStack align="flex-start" gap={1}>
-              <HStack gap={1}>
-                <HiClock size={16} color="#9CA3AF" />
-                <Text
-                  fontSize="12px"
-                  fontWeight="500"
-                  color="#9CA3AF"
-                  fontFamily="var(--font-inter), sans-serif"
-                >
-                  Date & Time
-                </Text>
-              </HStack>
-              <Text
-                fontSize="16px"
-                fontWeight="600"
-                color="#111827"
-                fontFamily="var(--font-inter), sans-serif"
-              >
-                {dateDisplay}
-              </Text>
-            </VStack>
-          </Card>
-        </SimpleGrid>
-      </Box>
-
-      <Box px={4}>
-        {/* Hosted By Section */}
-        <VStack align="stretch" gap={4} mb={6}>
-          <Heading
-            fontSize="18px"
-            fontWeight="700"
-            color="#111827"
-            fontFamily="var(--font-inter), sans-serif"
-          >
-            Hosted by
-          </Heading>
-          <Card>
-            <HStack gap={3}>
-              <Avatar name={hostName} src={hostAvatar} size="lg" />
-              <VStack align="flex-start" gap={0} flex={1}>
+        {/* Location and Date/Time Cards */}
+        <Box px={4} mt={-6} mb={6}>
+          <SimpleGrid columns={2} gap={3}>
+            {/* Location Card */}
+            <Card>
+              <VStack align="flex-start" gap={1}>
+                <HStack gap={1}>
+                  <HiLocationMarker size={16} color="#9CA3AF" />
+                  <Text
+                    fontSize="12px"
+                    fontWeight="500"
+                    color="#9CA3AF"
+                    fontFamily="var(--font-inter), sans-serif"
+                  >
+                    Location
+                  </Text>
+                </HStack>
                 <Text
                   fontSize="16px"
                   fontWeight="600"
                   color="#111827"
                   fontFamily="var(--font-inter), sans-serif"
                 >
-                  {hostName}
-                </Text>
-                <Text
-                  fontSize="14px"
-                  fontWeight="500"
-                  color="#9CA3AF"
-                  fontFamily="var(--font-inter), sans-serif"
-                >
-                  13 matches hosted
+                  {formatGameLocation(game.location)}
                 </Text>
               </VStack>
-            </HStack>
-          </Card>
-        </VStack>
+            </Card>
 
-        {/* Players Section */}
-        <VStack align="stretch" gap={4} mb={6}>
-          <HStack justify="space-between">
-            <Heading
-              fontSize="18px"
-              fontWeight="700"
-              color="#111827"
-              fontFamily="var(--font-inter), sans-serif"
-            >
-              Players
-            </Heading>
-            <Text
-              fontSize="14px"
-              fontWeight="500"
-              color="#9CA3AF"
-              fontFamily="var(--font-inter), sans-serif"
-            >
-              {game.currentPlayersCount}/{game.maxPlayers}
-            </Text>
-          </HStack>
-
-          {/* Players Grid */}
-          <SimpleGrid columns={4} gap={4}>
-            {players.map((player) => (
-              <VStack key={player.id} gap={1}>
-                <Avatar name={player.name} src={player.avatar} size="md" />
-                <Text
-                  fontSize="12px"
-                  fontWeight="500"
-                  color="#111827"
-                  fontFamily="var(--font-inter), sans-serif"
-                  textAlign="center"
-                >
-                  {player.name.split(" ")[0]}
-                </Text>
-              </VStack>
-            ))}
-            {/* Open spots */}
-            {Array.from({ length: spotsLeft }).map((_, index) => (
-              <VStack key={`open-${index}`} gap={1}>
-                <Box
-                  w="48px"
-                  h="48px"
-                  borderRadius="full"
-                  border="2px dashed"
-                  borderColor="#E5E7EB"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  bg="white"
-                >
+            {/* Date & Time Card */}
+            <Card>
+              <VStack align="flex-start" gap={1}>
+                <HStack gap={1}>
+                  <HiClock size={16} color="#9CA3AF" />
                   <Text
-                    fontSize="20px"
+                    fontSize="12px"
+                    fontWeight="500"
                     color="#9CA3AF"
                     fontFamily="var(--font-inter), sans-serif"
                   >
-                    ?
+                    Date & Time
                   </Text>
-                </Box>
+                </HStack>
                 <Text
-                  fontSize="12px"
-                  fontWeight="500"
-                  color="#9CA3AF"
+                  fontSize="16px"
+                  fontWeight="600"
+                  color="#111827"
                   fontFamily="var(--font-inter), sans-serif"
                 >
-                  Open
+                  {dateDisplay}
                 </Text>
               </VStack>
-            ))}
+            </Card>
           </SimpleGrid>
+        </Box>
 
-          {spotsLeft > 0 && (
-            <Button
-              bg="#3CB371"
-              color="white"
-              borderRadius="lg"
-              py={2}
-              fontSize="14px"
-              fontWeight="600"
-              fontFamily="var(--font-inter), sans-serif"
-              _hover={{ opacity: 0.9 }}
-            >
-              {spotsLeft} spot{spotsLeft === 1 ? "" : "s"} left!
-            </Button>
-          )}
-        </VStack>
-
-        {/* About this Match Section */}
-        {game.description && (
+        <Box px={4}>
+          {/* Hosted By Section */}
           <VStack align="stretch" gap={4} mb={6}>
             <Heading
               fontSize="18px"
@@ -447,55 +333,180 @@ export default function GameDetailPage() {
               color="#111827"
               fontFamily="var(--font-inter), sans-serif"
             >
-              About this Match
+              Hosted by
             </Heading>
+            <Card>
+              <HStack gap={3}>
+                <Avatar name={hostName} src={hostAvatar} size="lg" />
+                <VStack align="flex-start" gap={0} flex={1}>
+                  <Text
+                    fontSize="16px"
+                    fontWeight="600"
+                    color="#111827"
+                    fontFamily="var(--font-inter), sans-serif"
+                  >
+                    {hostName}
+                  </Text>
+                  <Text
+                    fontSize="14px"
+                    fontWeight="500"
+                    color="#9CA3AF"
+                    fontFamily="var(--font-inter), sans-serif"
+                  >
+                    13 matches hosted
+                  </Text>
+                </VStack>
+              </HStack>
+            </Card>
+          </VStack>
+
+          {/* Players Section */}
+          <VStack align="stretch" gap={4} mb={6}>
+            <HStack justify="space-between">
+              <Heading
+                fontSize="18px"
+                fontWeight="700"
+                color="#111827"
+                fontFamily="var(--font-inter), sans-serif"
+              >
+                Players
+              </Heading>
+              <Text
+                fontSize="14px"
+                fontWeight="500"
+                color="#9CA3AF"
+                fontFamily="var(--font-inter), sans-serif"
+              >
+                {game.currentPlayersCount}/{game.maxPlayers}
+              </Text>
+            </HStack>
+
+            {/* Players Grid */}
+            <SimpleGrid columns={4} gap={4}>
+              {players.map((player) => (
+                <VStack key={player.id} gap={1}>
+                  <Avatar name={player.name} src={player.avatar} size="md" />
+                  <Text
+                    fontSize="12px"
+                    fontWeight="500"
+                    color="#111827"
+                    fontFamily="var(--font-inter), sans-serif"
+                    textAlign="center"
+                  >
+                    {player.name.split(" ")[0]}
+                  </Text>
+                </VStack>
+              ))}
+              {/* Open spots */}
+              {Array.from({ length: spotsLeft }).map((_, index) => (
+                <VStack key={`open-${index}`} gap={1}>
+                  <Box
+                    w="48px"
+                    h="48px"
+                    borderRadius="full"
+                    border="2px dashed"
+                    borderColor="#E5E7EB"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    bg="white"
+                  >
+                    <Text
+                      fontSize="20px"
+                      color="#9CA3AF"
+                      fontFamily="var(--font-inter), sans-serif"
+                    >
+                      ?
+                    </Text>
+                  </Box>
+                  <Text
+                    fontSize="12px"
+                    fontWeight="500"
+                    color="#9CA3AF"
+                    fontFamily="var(--font-inter), sans-serif"
+                  >
+                    Open
+                  </Text>
+                </VStack>
+              ))}
+            </SimpleGrid>
+
+            {spotsLeft > 0 && (
+              <Button
+                bg="#3CB371"
+                color="white"
+                borderRadius="lg"
+                py={2}
+                fontSize="14px"
+                fontWeight="600"
+                fontFamily="var(--font-inter), sans-serif"
+                _hover={{ opacity: 0.9 }}
+              >
+                {spotsLeft} spot{spotsLeft === 1 ? "" : "s"} left!
+              </Button>
+            )}
+          </VStack>
+
+          {/* About this Match Section */}
+          {game.description && (
+            <VStack align="stretch" gap={4} mb={6}>
+              <Heading
+                fontSize="18px"
+                fontWeight="700"
+                color="#111827"
+                fontFamily="var(--font-inter), sans-serif"
+              >
+                About this Match
+              </Heading>
+              <Text
+                fontSize="14px"
+                fontWeight="500"
+                color="#6B7280"
+                fontFamily="var(--font-inter), sans-serif"
+                lineHeight="1.6"
+              >
+                {game.description}
+              </Text>
+            </VStack>
+          )}
+
+          {/* Location Map Section */}
+          <VStack align="stretch" gap={4} mb={6}>
+            <Heading
+              fontSize="18px"
+              fontWeight="700"
+              color="#111827"
+              fontFamily="var(--font-inter), sans-serif"
+            >
+              Location
+            </Heading>
+            {/* Map Placeholder */}
+            <Box
+              h="200px"
+              bg="#E5E7EB"
+              borderRadius="lg"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              position="relative"
+            >
+              <HiLocationMarker size={32} color="#9CA3AF" />
+            </Box>
             <Text
               fontSize="14px"
               fontWeight="500"
-              color="#6B7280"
+              color="#111827"
               fontFamily="var(--font-inter), sans-serif"
-              lineHeight="1.6"
             >
-              {game.description}
+              {game.location.address || formatGameLocation(game.location)}
             </Text>
           </VStack>
-        )}
-
-        {/* Location Map Section */}
-        <VStack align="stretch" gap={4} mb={6}>
-          <Heading
-            fontSize="18px"
-            fontWeight="700"
-            color="#111827"
-            fontFamily="var(--font-inter), sans-serif"
-          >
-            Location
-          </Heading>
-          {/* Map Placeholder */}
-          <Box
-            h="200px"
-            bg="#E5E7EB"
-            borderRadius="lg"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            position="relative"
-          >
-            <HiLocationMarker size={32} color="#9CA3AF" />
-          </Box>
-          <Text
-            fontSize="14px"
-            fontWeight="500"
-            color="#111827"
-            fontFamily="var(--font-inter), sans-serif"
-          >
-            {game.location.address || formatGameLocation(game.location)}
-          </Text>
-        </VStack>
+        </Box>
       </Box>
 
-      {/* Bottom Action Bar */}
+      {/* Bottom Action Bar - Always at bottom */}
       <Box
+        flexShrink={0}
         bg="white"
         borderTop="1px solid"
         borderColor="#E5E7EB"
@@ -525,11 +536,11 @@ export default function GameDetailPage() {
 
           {/* Action Buttons */}
           <HStack gap={2}>
-            <SecondaryButton
-              onClick={handleShare}
-              leftIcon={<HiShare size={20} />}
-            >
-              Share Event
+            <SecondaryButton onClick={handleShare}>
+              <HStack gap={2}>
+                <HiShare size={20} />
+                <Text>Share Event</Text>
+              </HStack>
             </SecondaryButton>
             {isRegistered ? (
               <PrimaryButton
