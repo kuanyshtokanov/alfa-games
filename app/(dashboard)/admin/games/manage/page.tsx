@@ -26,7 +26,6 @@ import {
   formatGameDate,
   formatGameLocation,
   formatGamePrice,
-  detectGameSportType,
 } from "@/lib/utils/game";
 import type { Game } from "@/types/game";
 import type { UserRole } from "@/lib/utils/rbac-client";
@@ -223,7 +222,6 @@ export default function ManageGamesPage() {
               {games.length} {games.length === 1 ? "game" : "games"} found
             </Text>
             {games.map((game) => {
-              const sportType = detectGameSportType(game);
               const hostId =
                 typeof game.hostId === "string"
                   ? game.hostId
@@ -238,15 +236,6 @@ export default function ManageGamesPage() {
                     location={formatGameLocation(game.location)}
                     price={formatGamePrice(game.price, game.currency)}
                     participants={`${game.currentPlayersCount}/${game.maxPlayers}`}
-                    sportType={sportType}
-                    statusTag={game.status}
-                    statusTagColor={
-                      game.status === "upcoming"
-                        ? "primary.400"
-                        : game.status === "cancelled"
-                        ? "error.500"
-                        : "gray.500"
-                    }
                     actionLabel="View Details"
                     onAction={() => router.push(`/games/${game.id}`)}
                   />

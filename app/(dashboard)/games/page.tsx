@@ -1,16 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  Box,
-  VStack,
-  HStack,
-  Text,
-  Spinner,
-  Center,
-} from "@chakra-ui/react";
+import { Box, VStack, HStack, Text, Spinner, Center } from "@chakra-ui/react";
 import { FilterButton } from "@/components/ui/FilterButton";
 import { EventCard } from "@/components/ui/Card";
 import { BottomNav } from "@/components/ui/BottomNav";
@@ -31,6 +24,9 @@ export default function FindMatchPage() {
   const { user } = useAuth();
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoadingGameId, setActionLoadingGameId] = useState<string | null>(
+    null
+  );
   const [selectedSport, setSelectedSport] = useState<SportFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [navItems, setNavItems] = useState(getBottomNavItems());
@@ -69,32 +65,118 @@ export default function FindMatchPage() {
       getCurrentUserRole(user).then((userRole) => {
         if (userRole) {
           setNavItems(
-            getBottomNavItems(
-              userRole.role,
-              userRole.isClubManager || false
-            )
+            getBottomNavItems(userRole.role, userRole.isClubManager || false)
           );
         }
       });
     }
   }, [user, fetchGames]);
 
-  const filteredGames = games.filter((game) => {
-    if (selectedSport !== "all") {
-      const gameSport = detectGameSportType(game);
-      if (gameSport !== selectedSport) {
-        return false;
+  const visibleGames = useMemo(() => {
+    return games.filter((game) => {
+      if (selectedSport !== "all") {
+        const gameSport = detectGameSportType(game);
+        if (gameSport !== selectedSport) {
+          return false;
+        }
       }
-    }
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return (
-        game.title.toLowerCase().includes(query) ||
-        formatGameLocation(game.location).toLowerCase().includes(query)
-      );
-    }
-    return true;
-  });
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        return (
+          game.title.toLowerCase().includes(query) ||
+          formatGameLocation(game.location).toLowerCase().includes(query)
+        );
+      }
+      return true;
+    });
+  }, [games, searchQuery, selectedSport]);
+
+  const handleJoinEvent = useCallback(
+    async (gameId: string) => {
+      if (!user) return;
+
+      try {
+        setActionLoadingGameId(gameId);
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/games/${gameId}/register`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.error || "Failed to join event");
+          return;
+        }
+
+        // Update only this game after successful response
+        setGames((prev) =>
+          prev.map((g) => {
+            if (g.id !== gameId) return g;
+            return {
+              ...g,
+              isRegistered: true,
+              currentPlayersCount: Math.min(
+                g.currentPlayersCount + 1,
+                g.maxPlayers
+              ),
+            };
+          })
+        );
+      } catch (error) {
+        console.error("Error joining event:", error);
+        alert("Failed to join event. Please try again.");
+      } finally {
+        setActionLoadingGameId(null);
+      }
+    },
+    [user]
+  );
+
+  const handleCancelEvent = useCallback(
+    async (gameId: string) => {
+      if (!user) return;
+
+      try {
+        setActionLoadingGameId(gameId);
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/games/${gameId}/cancel`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.error || "Failed to cancel event");
+          return;
+        }
+
+        // Update only this game after successful response
+        setGames((prev) =>
+          prev.map((g) => {
+            if (g.id !== gameId) return g;
+            return {
+              ...g,
+              isRegistered: false,
+              currentPlayersCount: Math.max(g.currentPlayersCount - 1, 0),
+            };
+          })
+        );
+      } catch (error) {
+        console.error("Error cancelling event:", error);
+        alert("Failed to cancel event. Please try again.");
+      } finally {
+        setActionLoadingGameId(null);
+      }
+    },
+    [user]
+  );
 
   if (!user) {
     return null;
@@ -163,8 +245,8 @@ export default function FindMatchPage() {
             color="#9CA3AF"
             fontFamily="var(--font-inter), sans-serif"
           >
-            {filteredGames.length}{" "}
-            {filteredGames.length === 1 ? "event" : "events"}
+            {visibleGames.length}{" "}
+            {visibleGames.length === 1 ? "event" : "events"}
           </Text>
         </HStack>
 
@@ -172,7 +254,7 @@ export default function FindMatchPage() {
           <Center py={12}>
             <Spinner size="lg" color="#3CB371" />
           </Center>
-        ) : filteredGames.length === 0 ? (
+        ) : visibleGames.length === 0 ? (
           <Box bg="#FFFFFF" borderRadius="lg" p={8} textAlign="center">
             <Text
               fontSize="16px"
@@ -185,8 +267,9 @@ export default function FindMatchPage() {
           </Box>
         ) : (
           <VStack gap={4} align="stretch">
-            {filteredGames.map((game) => {
-              const sportType = detectGameSportType(game);
+            {visibleGames.map((game) => {
+              const isRegistered = game.isRegistered || false;
+              const actionLoading = actionLoadingGameId === game.id;
               return (
                 <EventCard
                   key={game.id}
@@ -195,9 +278,14 @@ export default function FindMatchPage() {
                   location={formatGameLocation(game.location)}
                   price={formatGamePrice(game.price, game.currency)}
                   participants={`${game.currentPlayersCount}/${game.maxPlayers}`}
-                  sportType={sportType}
-                  onAction={() => router.push(`/games/${game.id}`)}
-                  actionLabel="Join Event"
+                  onAction={() =>
+                    isRegistered
+                      ? handleCancelEvent(game.id)
+                      : handleJoinEvent(game.id)
+                  }
+                  actionLabel={isRegistered ? "Cancel Event" : "Join Event"}
+                  actionLoading={actionLoading}
+                  onCardClick={() => router.push(`/games/${game.id}`)}
                 />
               );
             })}
@@ -205,8 +293,8 @@ export default function FindMatchPage() {
         )}
       </Box>
 
-            {/* Bottom Navigation */}
-            <BottomNav items={navItems} />
+      {/* Bottom Navigation */}
+      <BottomNav items={navItems} />
     </Box>
   );
 }

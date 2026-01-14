@@ -68,6 +68,7 @@ export interface Game {
   isPublic: boolean;
   clubId?: GameClub | string;
   status: "upcoming" | "cancelled" | "completed";
+  isRegistered?: boolean; // Whether the current user is registered for this game
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
 }

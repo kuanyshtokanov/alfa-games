@@ -16,10 +16,13 @@ import {
   HStack,
   Heading,
   Text,
-  Image,
-  ImageProps,
+  Button,
 } from "@chakra-ui/react";
 import { ReactNode } from "react";
+import { GiSoccerBall } from "react-icons/gi";
+import { HiLocationMarker } from "react-icons/hi";
+import { HiClock } from "react-icons/hi";
+import { HiUsers } from "react-icons/hi";
 
 export interface CardProps extends BoxProps {
   children: ReactNode;
@@ -46,18 +49,15 @@ export function Card({ children, ...props }: CardProps) {
 }
 
 export interface EventCardProps extends BoxProps {
-  image?: string;
-  imageAlt?: string;
   title: string;
   date: string;
   location: string;
   price?: string;
   participants?: string;
-  sportType?: "football" | "basketball" | "tennis" | "all";
   onAction?: () => void;
   actionLabel?: string;
-  statusTag?: string;
-  statusTagColor?: string;
+  actionLoading?: boolean;
+  onCardClick?: () => void;
 }
 
 /**
@@ -65,95 +65,27 @@ export interface EventCardProps extends BoxProps {
  * Matches Figma design with sport icon, title, date, location, participants, price, and action button
  */
 export function EventCard({
-  image,
-  imageAlt = "Event image",
   title,
   date,
   location,
   price,
   participants,
-  sportType = "all",
   onAction,
   actionLabel = "Join Event",
-  statusTag,
-  statusTagColor = "primary.400",
+  actionLoading = false,
+  onCardClick,
   ...props
 }: EventCardProps) {
-  const getSportIcon = () => {
-    switch (sportType) {
-      case "football":
-        return (
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#111827"
-            strokeWidth="2"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2 L12 22 M2 12 L22 12" />
-            <path d="M6 6 L18 18 M18 6 L6 18" strokeWidth="1.5" />
-          </svg>
-        );
-      case "basketball":
-        return (
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#111827"
-            strokeWidth="2"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2 Q16 6 12 12 Q8 18 12 22" />
-            <path d="M12 2 Q8 6 12 12 Q16 18 12 22" />
-            <path d="M2 12 Q6 8 12 12 Q18 16 22 12" />
-            <path d="M2 12 Q6 16 12 12 Q18 8 22 12" />
-          </svg>
-        );
-      case "tennis":
-        return (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" fill="#84CC16" />
-            <path
-              d="M8 8 L16 16 M16 8 L8 16"
-              stroke="#FFFFFF"
-              strokeWidth="2"
-            />
-          </svg>
-        );
-      default:
-        return (
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#111827"
-            strokeWidth="2"
-          >
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        );
-    }
-  };
+  // Use green color scheme consistently
+  const cardColor = "#3CB371"; // Primary green
 
-  const getSportColor = () => {
-    switch (sportType) {
-      case "football":
-        return "#3CB371"; // Green
-      case "basketball":
-        return "#F98127"; // Orange
-      case "tennis":
-        return "#84CC16"; // Yellow-green
-      default:
-        return "#3CB371"; // Default green
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on the button
+    if ((e.target as HTMLElement).closest("button")) {
+      return;
     }
+    onCardClick?.();
   };
-
-  const sportColor = getSportColor();
 
   return (
     <Box
@@ -164,156 +96,121 @@ export function EventCard({
       border="1px solid"
       borderColor="#E5E7EB"
       borderLeftWidth="4px"
-      borderLeftColor={sportColor}
+      borderLeftColor={cardColor}
       position="relative"
+      cursor={onCardClick ? "pointer" : "default"}
+      onClick={handleCardClick}
+      _hover={onCardClick ? { boxShadow: "md" } : {}}
+      transition="box-shadow 0.2s"
       {...props}
     >
-      <HStack align="flex-start" gap={4}>
-        {/* Sport Icon */}
-        <Box flexShrink={0} mt={1}>
-          {getSportIcon()}
-        </Box>
+      <VStack align="stretch" gap={4}>
+        <HStack align="flex-start" gap={4}>
+          {/* Sport Icon */}
+          <Box flexShrink={0} mt={1}>
+            <GiSoccerBall size={24} color="#111827" />
+          </Box>
 
-        {/* Content */}
-        <VStack align="stretch" gap={2} flex={1}>
-          <Heading
-            size="md"
-            fontWeight="600"
-            fontSize="16px"
-            color="#111827"
-            fontFamily="var(--font-inter), sans-serif"
-          >
-            {title}
-          </Heading>
+          {/* Content */}
+          <VStack align="stretch" gap={2} flex={1} minW={0}>
+            <Heading
+              size="md"
+              fontWeight="600"
+              fontSize="16px"
+              color="#111827"
+              fontFamily="var(--font-inter), sans-serif"
+              width="100%"
+              overflow="hidden"
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+            >
+              {title}
+            </Heading>
 
-          <VStack align="stretch" gap={1.5}>
-            {/* Location */}
-            <HStack gap={1.5}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#9CA3AF"
-                strokeWidth="2"
-              >
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              <Text
-                fontSize="14px"
-                fontWeight="500"
-                color="#9CA3AF"
-                fontFamily="var(--font-inter), sans-serif"
-              >
-                {location}
-              </Text>
-            </HStack>
-
-            {/* Time */}
-            <HStack gap={1.5}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#9CA3AF"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-              <Text
-                fontSize="14px"
-                fontWeight="500"
-                color="#9CA3AF"
-                fontFamily="var(--font-inter), sans-serif"
-              >
-                {date}
-              </Text>
-            </HStack>
-
-            {/* Participants */}
-            {participants && (
+            <VStack align="stretch" gap={1.5}>
+              {/* Location */}
               <HStack gap={1.5}>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#9CA3AF"
-                  strokeWidth="2"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
+                <HiLocationMarker size={16} color="#9CA3AF" />
                 <Text
                   fontSize="14px"
                   fontWeight="500"
                   color="#9CA3AF"
                   fontFamily="var(--font-inter), sans-serif"
                 >
-                  {participants}
+                  {location}
                 </Text>
               </HStack>
-            )}
-          </VStack>
 
-          {/* Status Tag and View Details */}
-          <HStack justify="space-between" align="center" pt={2}>
-            {statusTag && (
+              {/* Time */}
               <HStack gap={1.5}>
-                <Box w="8px" h="8px" borderRadius="full" bg={statusTagColor} />
+                <HiClock size={16} color="#9CA3AF" />
                 <Text
                   fontSize="14px"
                   fontWeight="500"
-                  color="#111827"
+                  color="#9CA3AF"
                   fontFamily="var(--font-inter), sans-serif"
                 >
-                  {statusTag}
+                  {date}
                 </Text>
               </HStack>
-            )}
-            {onAction && actionLabel && (
-              <Text
-                as="button"
-                onClick={onAction}
-                fontSize="14px"
-                fontWeight="500"
-                color="#9CA3AF"
-                fontFamily="var(--font-inter), sans-serif"
-                _hover={{ color: "#111827" }}
-                cursor="pointer"
-              >
-                {actionLabel}
-              </Text>
-            )}
-          </HStack>
-        </VStack>
 
-        {/* Price Tag */}
-        {price && (
-          <Box
-            bg={sportColor}
+              {/* Participants */}
+              {participants && (
+                <HStack gap={1.5}>
+                  <HiUsers size={16} color="#9CA3AF" />
+                  <Text
+                    fontSize="14px"
+                    fontWeight="500"
+                    color="#9CA3AF"
+                    fontFamily="var(--font-inter), sans-serif"
+                  >
+                    {participants}
+                  </Text>
+                </HStack>
+              )}
+            </VStack>
+          </VStack>
+
+          {/* Price Tag */}
+          {price && (
+            <Box
+              bg={cardColor}
+              color="#FFFFFF"
+              px={3}
+              py={1.5}
+              borderRadius="full"
+              fontSize="14px"
+              fontWeight="600"
+              fontFamily="var(--font-inter), sans-serif"
+              flexShrink={0}
+              alignSelf="flex-start"
+            >
+              {price}
+            </Box>
+          )}
+        </HStack>
+
+        {/* Action Button - Full width at bottom, outside HStack */}
+        {onAction && actionLabel && (
+          <Button
+            onClick={onAction}
+            bg={cardColor}
             color="#FFFFFF"
-            px={3}
-            py={1.5}
-            borderRadius="full"
-            fontSize="14px"
+            w="full"
+            py={2.5}
+            borderRadius="lg"
             fontWeight="600"
+            fontSize="14px"
             fontFamily="var(--font-inter), sans-serif"
-            flexShrink={0}
-            alignSelf="flex-start"
-            position="absolute"
-            top={4}
-            right={4}
+            _hover={{ opacity: 0.9 }}
+            _active={{ opacity: 0.8 }}
+            loading={actionLoading}
+            disabled={actionLoading}
           >
-            {price}
-          </Box>
+            {actionLabel}
+          </Button>
         )}
-      </HStack>
+      </VStack>
     </Box>
   );
 }

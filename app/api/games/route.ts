@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from "@/lib/utils/api-auth";
 import { canCreateGame } from "@/lib/utils/rbac";
 import connectDB from "@/lib/mongodb/connect";
 import Game from "@/lib/mongodb/models/Game";
+import Registration from "@/lib/mongodb/models/Registration";
 import { z } from "zod";
 
 // Validation schema for creating/updating games
@@ -57,6 +58,14 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "50");
     const skip = parseInt(searchParams.get("skip") || "0");
 
+    // Get authenticated user to check registration status
+    let user = null;
+    try {
+      user = await getAuthenticatedUser(request);
+    } catch {
+      // User not authenticated, continue without registration status
+    }
+
     const query: Record<string, unknown> = {};
 
     if (hostId) {
@@ -82,6 +91,19 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .skip(skip)
       .lean();
+
+    // Get user's registrations if authenticated
+    let userRegistrations: Map<string, boolean> = new Map();
+    if (user) {
+      const registrations = await Registration.find({
+        playerId: user._id,
+        status: "confirmed",
+      }).lean();
+
+      registrations.forEach((reg) => {
+        userRegistrations.set(reg.gameId.toString(), true);
+      });
+    }
 
     return NextResponse.json(
       {
@@ -109,6 +131,7 @@ export async function GET(request: NextRequest) {
           isPublic: game.isPublic,
           clubId: game.clubId,
           status: game.status,
+          isRegistered: user ? userRegistrations.has(game._id.toString()) : false,
           createdAt: game.createdAt instanceof Date 
             ? game.createdAt.toISOString() 
             : game.createdAt,

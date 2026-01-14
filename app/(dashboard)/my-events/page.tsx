@@ -14,7 +14,6 @@ import {
   formatGameDate,
   formatGameLocation,
   formatGamePrice,
-  detectGameSportType,
 } from "@/lib/utils/game";
 import type { Game } from "@/types/game";
 
@@ -160,7 +159,6 @@ export default function MyEventsPage() {
         ) : (
           <VStack gap={4} align="stretch">
             {filteredGames.map((game) => {
-              const sportType = detectGameSportType(game);
               return (
                 <EventCard
                   key={game.id}
@@ -169,9 +167,6 @@ export default function MyEventsPage() {
                   location={formatGameLocation(game.location)}
                   price={formatGamePrice(game.price, game.currency)}
                   participants={`${game.currentPlayersCount} / ${game.maxPlayers} joined`}
-                  sportType={sportType}
-                  statusTag="Confirmed"
-                  statusTagColor="primary.400"
                   actionLabel="View Details"
                   onAction={() => router.push(`/games/${game.id}`)}
                 />
