@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from "@/lib/utils/api-auth";
 import { canManageGame } from "@/lib/utils/rbac";
 import connectDB from "@/lib/mongodb/connect";
 import Game from "@/lib/mongodb/models/Game";
+import Registration from "@/lib/mongodb/models/Registration";
 import { z } from "zod";
 import mongoose from "mongoose";
 
@@ -70,6 +71,22 @@ export async function GET(
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
     }
 
+    // Check if user is registered (optional - don't fail if not authenticated)
+    let isRegistered = false;
+    try {
+      const user = await getAuthenticatedUser(request);
+      if (user) {
+        const registration = await Registration.findOne({
+          gameId: game._id,
+          playerId: user._id,
+          status: "confirmed",
+        }).lean();
+        isRegistered = !!registration;
+      }
+    } catch {
+      // User not authenticated, continue without registration status
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -97,6 +114,7 @@ export async function GET(
           isPublic: game.isPublic,
           clubId: game.clubId,
           status: game.status,
+          isRegistered,
           createdAt:
             game.createdAt instanceof Date
               ? game.createdAt.toISOString()

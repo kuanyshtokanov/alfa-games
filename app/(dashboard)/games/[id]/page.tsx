@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
@@ -9,273 +9,161 @@ import {
   HStack,
   Heading,
   Text,
-  FieldRoot,
-  FieldLabel,
-  SimpleGrid,
-  AlertRoot,
-  AlertContent,
-  AlertIndicator,
   Spinner,
   Center,
-  Separator,
-  NativeSelectRoot,
-  NativeSelectField,
+  IconButton,
+  SimpleGrid,
+  Button,
 } from "@chakra-ui/react";
-import { Header } from "@/components/ui/Header";
-import { PrimaryButton, SecondaryButton } from "@/components/ui/Button";
-import { TextInput, TextArea } from "@/components/ui/Input";
+import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
-import { StatusTag } from "@/components/ui/StatusTag";
-import { BottomNav } from "@/components/ui/BottomNav";
-import { getBottomNavItems } from "@/lib/navigation";
-import { getCurrentUserRole } from "@/lib/utils/rbac-client";
-import { StyledFieldLabel } from "@/components/ui/FieldLabel";
+import { PrimaryButton, SecondaryButton } from "@/components/ui/Button";
+import {
+  formatGameDate,
+  formatGameLocation,
+  formatGamePrice,
+} from "@/lib/utils/game";
+import { HiLocationMarker, HiClock, HiShare } from "react-icons/hi";
 import type { Game } from "@/types/game";
+
+interface Player {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
 
 export default function GameDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuth();
   const [game, setGame] = useState<Game | null>(null);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Partial<Game>>({});
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [actionLoading, setActionLoading] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   const gameId = params.id as string;
 
   useEffect(() => {
     if (user && gameId) {
-      fetchGame();
-      // Update navigation items based on user role
-      getCurrentUserRole(user).then((userRole) => {
-        if (userRole) {
-          setNavItems(
-            getBottomNavItems(
-              userRole.role,
-              userRole.isClubManager || false
-            )
-          );
-        }
-      });
+      fetchGameData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, gameId]);
 
-  const fetchGame = async () => {
+  const fetchGameData = useCallback(async () => {
     if (!user) return;
 
     try {
       setLoading(true);
       const token = await user.getIdToken();
-      const response = await fetch(`/api/games/${gameId}`, {
+
+      // Fetch game details
+      const gameResponse = await fetch(`/api/games/${gameId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch game");
+      if (!gameResponse.ok) {
+        throw new Error("Failed to fetch game");
       }
 
-      const data = await response.json();
+      const gameData = await gameResponse.json();
+      setGame(gameData.game);
+      setIsRegistered(gameData.game.isRegistered || false);
 
-      setGame(data.game);
-      setFormData(data.game);
-    } catch (err: unknown) {
-      const error = err as { message?: string };
-      setError(error.message || "Failed to load game");
+      // Fetch registrations
+      const regResponse = await fetch(`/api/games/${gameId}/registrations`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (regResponse.ok) {
+        const regData = await regResponse.json();
+        setPlayers(regData.players || []);
+      }
+    } catch (error) {
+      console.error("Error fetching game data:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, gameId]);
 
-  // Helper function to update nested location fields
-  const updateLocationField = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      location: {
-        ...(prev.location || { address: "", city: "", country: "" }),
-        [field]: value,
-      },
-    }));
-  };
-
-  // Helper function to update numeric fields
-  const updateNumericField = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: parseFloat(value) || 0,
-    }));
-  };
-
-  // Helper function to update checkbox fields
-  const updateCheckboxField = (name: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
-  };
-
-  // Helper function to update simple string fields
-  const updateStringField = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const target = e.target;
-    const { name, value } = target;
-
-    // Handle nested location fields
-    if (name.startsWith("location.")) {
-      const field = name.split(".")[1];
-      updateLocationField(field, value);
-      return;
-    }
-
-    // Handle numeric fields
-    const numericFields = ["duration", "maxPlayers", "price"];
-    if (numericFields.includes(name)) {
-      updateNumericField(name, value);
-      return;
-    }
-
-    // Handle checkbox fields
-    if (name === "isPublic") {
-      updateCheckboxField(name, (target as HTMLInputElement).checked);
-      return;
-    }
-
-    // Handle all other string fields
-    updateStringField(name, value);
-  };
-
-  const handleSave = async () => {
+  const handleJoin = useCallback(async () => {
     if (!user || !game) return;
 
     try {
-      setSaving(true);
-      setError(null);
+      setActionLoading(true);
       const token = await user.getIdToken();
-      const response = await fetch(`/api/games/${gameId}`, {
-        method: "PATCH",
+      const response = await fetch(`/api/games/${gameId}/register`, {
+        method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          datetime: formData.datetime
-            ? new Date(formData.datetime as string).toISOString()
-            : undefined,
-        }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update game");
-      }
 
       const data = await response.json();
 
-      setGame(data.game);
-      setFormData(data.game);
-      setIsEditing(false);
-    } catch (err: unknown) {
-      const error = err as { message?: string };
-      setError(error.message || "Failed to update game");
-    } finally {
-      setSaving(false);
-    }
-  };
+      if (!response.ok) {
+        alert(data.error || "Failed to join event");
+        return;
+      }
 
-  const handleDelete = async () => {
+      // Refresh data
+      await fetchGameData();
+    } catch (error) {
+      console.error("Error joining event:", error);
+      alert("Failed to join event. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  }, [user, game, gameId, fetchGameData]);
+
+  const handleCancel = useCallback(async () => {
     if (!user || !game) return;
-    if (!confirm("Are you sure you want to delete this game?")) return;
 
     try {
-      setSaving(true);
+      setActionLoading(true);
       const token = await user.getIdToken();
-      const response = await fetch(`/api/games/${gameId}`, {
-        method: "DELETE",
+      const response = await fetch(`/api/games/${gameId}/cancel`, {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to delete game");
-      }
-
-      router.push("/games");
-    } catch (err: unknown) {
-      const error = err as { message?: string };
-      setError(error.message || "Failed to delete game");
-      setSaving(false);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatLocation = (location: Game["location"]) => {
-    const parts = [location.address, location.city, location.country].filter(
-      Boolean
-    );
-    return parts.join(", ");
-  };
-
-  // Check if current user can manage this game (host, admin, or club manager)
-  const [canManage, setCanManage] = useState(false);
-
-  useEffect(() => {
-    const checkPermissions = async () => {
-      if (!user || !game) {
-        setCanManage(false);
+        alert(data.error || "Failed to cancel event");
         return;
       }
 
-      try {
-        const token = await user.getIdToken();
-        const response = await fetch(`/api/games/${gameId}/can-manage`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      // Refresh data
+      await fetchGameData();
+    } catch (error) {
+      console.error("Error cancelling event:", error);
+      alert("Failed to cancel event. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  }, [user, game, gameId, fetchGameData]);
 
-        if (response.ok) {
-          const data = await response.json();
-          setCanManage(data.canManage || false);
-        } else {
-          setCanManage(false);
-        }
-      } catch {
-        setCanManage(false);
-      }
-    };
-
-    checkPermissions();
-  }, [user, game, gameId]);
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: game?.title,
+        text: `Check out this match: ${game?.title}`,
+        url: window.location.href,
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      alert("Link copied to clipboard!");
+    }
+  };
 
   if (!user) {
     return null;
@@ -283,10 +171,9 @@ export default function GameDetailPage() {
 
   if (loading) {
     return (
-      <Box minH="100vh" bg="bg.secondary">
-        <Header title="Game Details" showBackButton />
+      <Box minH="100vh" bg="#F8F8F8">
         <Center py={12}>
-          <Spinner size="lg" color="primary.400" />
+          <Spinner size="lg" color="#3CB371" />
         </Center>
       </Box>
     );
@@ -294,374 +181,376 @@ export default function GameDetailPage() {
 
   if (!game) {
     return (
-      <Box minH="100vh" bg="bg.secondary">
-        <Header title="Game Details" showBackButton />
-        <Box p={4}>
-          <AlertRoot status="error">
-            <AlertIndicator />
-            <AlertContent>Game not found</AlertContent>
-          </AlertRoot>
-        </Box>
+      <Box minH="100vh" bg="#F8F8F8" p={4}>
+        <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">
+          Game not found
+        </Text>
       </Box>
     );
   }
 
+  const spotsLeft = game.maxPlayers - game.currentPlayersCount;
+  const hostInfo = game.hostId as any;
+  const hostName = hostInfo?.name || "Unknown Host";
+  const hostAvatar = hostInfo?.avatar;
+
+  // Format date for display
+  const gameDate = new Date(game.datetime);
+  const today = new Date();
+  const isToday =
+    gameDate.getDate() === today.getDate() &&
+    gameDate.getMonth() === today.getMonth() &&
+    gameDate.getFullYear() === today.getFullYear();
+
+  const dateDisplay = isToday
+    ? `Today, ${gameDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })} | ${gameDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
+    : `${gameDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })} | ${gameDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+
   return (
-    <Box minH="100vh" bg="bg.secondary" pb={20}>
-      <Header
-        title={isEditing ? "Edit Game" : "Game Details"}
-        showBackButton
-        rightContent={
-          canManage &&
-          !isEditing && (
-            <HStack gap={2}>
-              <SecondaryButton size="sm" onClick={() => setIsEditing(true)}>
-                Edit
-              </SecondaryButton>
-              <PrimaryButton
-                size="sm"
-                bg="error.500"
-                _hover={{ bg: "error.600" }}
-                _active={{ bg: "error.700" }}
-                onClick={handleDelete}
-                loading={saving}
-              >
-                Delete
-              </PrimaryButton>
-            </HStack>
-          )
-        }
-      />
-      <Box p={4} maxW="800px" mx="auto">
-        {error && (
-          <AlertRoot status="error" mb={4}>
-            <AlertIndicator />
-            <AlertContent>{error}</AlertContent>
-          </AlertRoot>
-        )}
+    <Box minH="100vh" bg="#F8F8F8">
+      {/* Banner Image with Back Button and Title */}
+      <Box h="200px" bg="#3CB371" borderRadius="0 0 24px 24px">
+        {/* Back Button */}
+        <IconButton
+          aria-label="Back"
+          position="absolute"
+          top={4}
+          left={4}
+          zIndex={2}
+          bg="rgba(255, 255, 255, 0.2)"
+          color="white"
+          borderRadius="full"
+          onClick={() => router.back()}
+          _hover={{ bg: "rgba(255, 255, 255, 0.3)" }}
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </IconButton>
 
-        <Card>
-          {isEditing ? (
-            <VStack gap={6} align="stretch">
-              <FieldRoot required>
-                <StyledFieldLabel>Game Title</StyledFieldLabel>
-                <TextInput
-                  name="title"
-                  value={formData.title || ""}
-                  onChange={handleInputChange}
-                />
-              </FieldRoot>
+        {/* Title Overlay */}
+        <Box position="relative" top={50} p={6}>
+          <Heading
+            color="white"
+            fontSize="28px"
+            fontWeight="700"
+            fontFamily="var(--font-inter), sans-serif"
+          >
+            {game.title}
+          </Heading>
+        </Box>
+      </Box>
 
-              <FieldRoot>
-                <StyledFieldLabel>Description</StyledFieldLabel>
-                <TextArea
-                  name="description"
-                  value={formData.description || ""}
-                  onChange={handleInputChange}
-                  rows={4}
-                />
-              </FieldRoot>
-
-              <VStack align="stretch" gap={4}>
-                <Heading
-                  size="md"
-                  color="gray.900"
+      {/* Location and Date/Time Cards */}
+      <Box px={4} mt={-6} mb={6}>
+        <SimpleGrid columns={2} gap={3}>
+          {/* Location Card */}
+          <Card>
+            <VStack align="flex-start" gap={1}>
+              <HStack gap={1}>
+                <HiLocationMarker size={16} color="#9CA3AF" />
+                <Text
+                  fontSize="12px"
+                  fontWeight="500"
+                  color="#9CA3AF"
                   fontFamily="var(--font-inter), sans-serif"
                 >
                   Location
-                </Heading>
-                <FieldRoot required>
-                  <StyledFieldLabel>Address</StyledFieldLabel>
-                  <TextInput
-                    name="location.address"
-                    value={formData.location?.address || ""}
-                    onChange={handleInputChange}
-                  />
-                </FieldRoot>
-                <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-                  <FieldRoot>
-                    <StyledFieldLabel>City</StyledFieldLabel>
-                    <TextInput
-                      name="location.city"
-                      value={formData.location?.city || ""}
-                      onChange={handleInputChange}
-                    />
-                  </FieldRoot>
-                  <FieldRoot>
-                    <StyledFieldLabel>Country</StyledFieldLabel>
-                    <TextInput
-                      name="location.country"
-                      value={formData.location?.country || ""}
-                      onChange={handleInputChange}
-                    />
-                  </FieldRoot>
-                </SimpleGrid>
-              </VStack>
-
-              <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-                <FieldRoot required>
-                  <StyledFieldLabel>Date & Time</StyledFieldLabel>
-                  <TextInput
-                    name="datetime"
-                    type="datetime-local"
-                    value={
-                      formData.datetime
-                        ? new Date(formData.datetime as string)
-                            .toISOString()
-                            .slice(0, 16)
-                        : ""
-                    }
-                    onChange={handleInputChange}
-                  />
-                </FieldRoot>
-                <FieldRoot required>
-                  <StyledFieldLabel>Duration (minutes)</StyledFieldLabel>
-                  <TextInput
-                    name="duration"
-                    type="number"
-                    value={formData.duration || 0}
-                    onChange={handleInputChange}
-                    min={1}
-                  />
-                </FieldRoot>
-              </SimpleGrid>
-
-              <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
-                <FieldRoot required>
-                  <StyledFieldLabel>Max Players</StyledFieldLabel>
-                  <TextInput
-                    name="maxPlayers"
-                    type="number"
-                    value={formData.maxPlayers || 0}
-                    onChange={handleInputChange}
-                    min={1}
-                  />
-                </FieldRoot>
-                <FieldRoot required>
-                  <StyledFieldLabel>Price</StyledFieldLabel>
-                  <TextInput
-                    name="price"
-                    type="number"
-                    value={formData.price || 0}
-                    onChange={handleInputChange}
-                    min={0}
-                    step="0.01"
-                  />
-                </FieldRoot>
-                <FieldRoot required>
-                  <StyledFieldLabel>Currency</StyledFieldLabel>
-                  <NativeSelectRoot>
-                    <NativeSelectField
-                      name="currency"
-                      value={formData.currency || "KZT"}
-                      onChange={handleInputChange}
-                    >
-                      <option value="KZT">KZT</option>
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="RUB">RUB</option>
-                    </NativeSelectField>
-                  </NativeSelectRoot>
-                </FieldRoot>
-              </SimpleGrid>
-
-              <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-                <FieldRoot>
-                  <StyledFieldLabel>Skill Level</StyledFieldLabel>
-                  <NativeSelectRoot>
-                    <NativeSelectField
-                      name="skillLevel"
-                      value={formData.skillLevel || "all"}
-                      onChange={handleInputChange}
-                    >
-                      <option value="all">All Levels</option>
-                      <option value="beginner">Beginner</option>
-                      <option value="intermediate">Intermediate</option>
-                      <option value="advanced">Advanced</option>
-                    </NativeSelectField>
-                  </NativeSelectRoot>
-                </FieldRoot>
-                <FieldRoot>
-                  <StyledFieldLabel>Status</StyledFieldLabel>
-                  <NativeSelectRoot>
-                    <NativeSelectField
-                      name="status"
-                      value={formData.status || "upcoming"}
-                      onChange={handleInputChange}
-                    >
-                      <option value="upcoming">Upcoming</option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="completed">Completed</option>
-                    </NativeSelectField>
-                  </NativeSelectRoot>
-                </FieldRoot>
-              </SimpleGrid>
-
-              <HStack gap={4} pt={4}>
-                <SecondaryButton
-                  type="button"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setFormData(game);
-                  }}
-                  flex={1}
-                >
-                  Cancel
-                </SecondaryButton>
-                <PrimaryButton
-                  type="button"
-                  onClick={handleSave}
-                  loading={saving}
-                  flex={1}
-                >
-                  Save Changes
-                </PrimaryButton>
+                </Text>
               </HStack>
+              <Text
+                fontSize="16px"
+                fontWeight="600"
+                color="#111827"
+                fontFamily="var(--font-inter), sans-serif"
+              >
+                {formatGameLocation(game.location)}
+              </Text>
             </VStack>
-          ) : (
-            <VStack gap={6} align="stretch">
-              <HStack justify="space-between" align="start">
-                <VStack align="start" gap={2}>
-                  <Heading
-                    size="lg"
-                    color="gray.900"
+          </Card>
+
+          {/* Date & Time Card */}
+          <Card>
+            <VStack align="flex-start" gap={1}>
+              <HStack gap={1}>
+                <HiClock size={16} color="#9CA3AF" />
+                <Text
+                  fontSize="12px"
+                  fontWeight="500"
+                  color="#9CA3AF"
+                  fontFamily="var(--font-inter), sans-serif"
+                >
+                  Date & Time
+                </Text>
+              </HStack>
+              <Text
+                fontSize="16px"
+                fontWeight="600"
+                color="#111827"
+                fontFamily="var(--font-inter), sans-serif"
+              >
+                {dateDisplay}
+              </Text>
+            </VStack>
+          </Card>
+        </SimpleGrid>
+      </Box>
+
+      <Box px={4}>
+        {/* Hosted By Section */}
+        <VStack align="stretch" gap={4} mb={6}>
+          <Heading
+            fontSize="18px"
+            fontWeight="700"
+            color="#111827"
+            fontFamily="var(--font-inter), sans-serif"
+          >
+            Hosted by
+          </Heading>
+          <Card>
+            <HStack gap={3}>
+              <Avatar name={hostName} src={hostAvatar} size="lg" />
+              <VStack align="flex-start" gap={0} flex={1}>
+                <Text
+                  fontSize="16px"
+                  fontWeight="600"
+                  color="#111827"
+                  fontFamily="var(--font-inter), sans-serif"
+                >
+                  {hostName}
+                </Text>
+                <Text
+                  fontSize="14px"
+                  fontWeight="500"
+                  color="#9CA3AF"
+                  fontFamily="var(--font-inter), sans-serif"
+                >
+                  13 matches hosted
+                </Text>
+              </VStack>
+            </HStack>
+          </Card>
+        </VStack>
+
+        {/* Players Section */}
+        <VStack align="stretch" gap={4} mb={6}>
+          <HStack justify="space-between">
+            <Heading
+              fontSize="18px"
+              fontWeight="700"
+              color="#111827"
+              fontFamily="var(--font-inter), sans-serif"
+            >
+              Players
+            </Heading>
+            <Text
+              fontSize="14px"
+              fontWeight="500"
+              color="#9CA3AF"
+              fontFamily="var(--font-inter), sans-serif"
+            >
+              {game.currentPlayersCount}/{game.maxPlayers}
+            </Text>
+          </HStack>
+
+          {/* Players Grid */}
+          <SimpleGrid columns={4} gap={4}>
+            {players.map((player) => (
+              <VStack key={player.id} gap={1}>
+                <Avatar name={player.name} src={player.avatar} size="md" />
+                <Text
+                  fontSize="12px"
+                  fontWeight="500"
+                  color="#111827"
+                  fontFamily="var(--font-inter), sans-serif"
+                  textAlign="center"
+                >
+                  {player.name.split(" ")[0]}
+                </Text>
+              </VStack>
+            ))}
+            {/* Open spots */}
+            {Array.from({ length: spotsLeft }).map((_, index) => (
+              <VStack key={`open-${index}`} gap={1}>
+                <Box
+                  w="48px"
+                  h="48px"
+                  borderRadius="full"
+                  border="2px dashed"
+                  borderColor="#E5E7EB"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  bg="white"
+                >
+                  <Text
+                    fontSize="20px"
+                    color="#9CA3AF"
                     fontFamily="var(--font-inter), sans-serif"
                   >
-                    {game.title}
-                  </Heading>
-                  {getStatusTag(game.status)}
-                </VStack>
-              </HStack>
-
-              {game.description && (
-                <>
-                  <Separator />
-                  <VStack align="start" gap={2}>
-                    <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                      Description
-                    </Heading>
-                    <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.description}</Text>
-                  </VStack>
-                </>
-              )}
-
-              <Separator />
-
-              <VStack align="start" gap={2}>
-                <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                  Date & Time
-                </Heading>
-                <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{formatDate(game.datetime)}</Text>
-              </VStack>
-
-              <Separator />
-
-              <VStack align="start" gap={2}>
-                <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                  Location
-                </Heading>
-                <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{formatLocation(game.location)}</Text>
-              </VStack>
-
-              <Separator />
-
-              <SimpleGrid columns={2} gap={4}>
-                <VStack align="start" gap={2}>
-                  <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                    Duration
-                  </Heading>
-                  <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.duration} minutes</Text>
-                </VStack>
-                <VStack align="start" gap={2}>
-                  <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                    Players
-                  </Heading>
-                  <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">
-                    {game.currentPlayersCount} / {game.maxPlayers}
+                    ?
                   </Text>
-                </VStack>
-                <VStack align="start" gap={2}>
-                  <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                    Price
-                  </Heading>
-                  <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">
-                    {game.price} {game.currency}
-                  </Text>
-                </VStack>
-                <VStack align="start" gap={2}>
-                  <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                    Skill Level
-                  </Heading>
-                  <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.skillLevel}</Text>
-                </VStack>
-              </SimpleGrid>
+                </Box>
+                <Text
+                  fontSize="12px"
+                  fontWeight="500"
+                  color="#9CA3AF"
+                  fontFamily="var(--font-inter), sans-serif"
+                >
+                  Open
+                </Text>
+              </VStack>
+            ))}
+          </SimpleGrid>
 
-              {game.rules && (
-                <>
-                  <Separator />
-                  <VStack align="start" gap={2}>
-                    <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                      Rules
-                    </Heading>
-                    <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.rules}</Text>
-                  </VStack>
-                </>
-              )}
-
-              {game.hostInfo && (
-                <>
-                  <Separator />
-                  <VStack align="start" gap={2}>
-                    <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                      Host Information
-                    </Heading>
-                    <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.hostInfo}</Text>
-                  </VStack>
-                </>
-              )}
-
-              {game.cancellationPolicy && (
-                <>
-                  <Separator />
-                  <VStack align="start" gap={2}>
-                    <Heading size="sm" color="gray.400" fontFamily="var(--font-inter), sans-serif">
-                      Cancellation Policy
-                    </Heading>
-                    <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">{game.cancellationPolicy}</Text>
-                  </VStack>
-                </>
-              )}
-            </VStack>
+          {spotsLeft > 0 && (
+            <Button
+              bg="#3CB371"
+              color="white"
+              borderRadius="lg"
+              py={2}
+              fontSize="14px"
+              fontWeight="600"
+              fontFamily="var(--font-inter), sans-serif"
+              _hover={{ opacity: 0.9 }}
+            >
+              {spotsLeft} spot{spotsLeft === 1 ? "" : "s"} left!
+            </Button>
           )}
-        </Card>
+        </VStack>
+
+        {/* About this Match Section */}
+        {game.description && (
+          <VStack align="stretch" gap={4} mb={6}>
+            <Heading
+              fontSize="18px"
+              fontWeight="700"
+              color="#111827"
+              fontFamily="var(--font-inter), sans-serif"
+            >
+              About this Match
+            </Heading>
+            <Text
+              fontSize="14px"
+              fontWeight="500"
+              color="#6B7280"
+              fontFamily="var(--font-inter), sans-serif"
+              lineHeight="1.6"
+            >
+              {game.description}
+            </Text>
+          </VStack>
+        )}
+
+        {/* Location Map Section */}
+        <VStack align="stretch" gap={4} mb={6}>
+          <Heading
+            fontSize="18px"
+            fontWeight="700"
+            color="#111827"
+            fontFamily="var(--font-inter), sans-serif"
+          >
+            Location
+          </Heading>
+          {/* Map Placeholder */}
+          <Box
+            h="200px"
+            bg="#E5E7EB"
+            borderRadius="lg"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            position="relative"
+          >
+            <HiLocationMarker size={32} color="#9CA3AF" />
+          </Box>
+          <Text
+            fontSize="14px"
+            fontWeight="500"
+            color="#111827"
+            fontFamily="var(--font-inter), sans-serif"
+          >
+            {game.location.address || formatGameLocation(game.location)}
+          </Text>
+        </VStack>
       </Box>
-      {/* Bottom Navigation */}
-      <BottomNav items={navItems} />
+
+      {/* Bottom Action Bar */}
+      <Box
+        bg="white"
+        borderTop="1px solid"
+        borderColor="#E5E7EB"
+        p={4}
+        boxShadow="0 -2px 10px rgba(0, 0, 0, 0.05)"
+      >
+        <HStack justify="space-between" align="center">
+          {/* Price */}
+          <VStack align="flex-start" gap={0}>
+            <Text
+              fontSize="18px"
+              fontWeight="700"
+              color="#111827"
+              fontFamily="var(--font-inter), sans-serif"
+            >
+              {formatGamePrice(game.price, game.currency)}
+            </Text>
+            <Text
+              fontSize="12px"
+              fontWeight="500"
+              color="#9CA3AF"
+              fontFamily="var(--font-inter), sans-serif"
+            >
+              per person
+            </Text>
+          </VStack>
+
+          {/* Action Buttons */}
+          <HStack gap={2}>
+            <SecondaryButton
+              onClick={handleShare}
+              leftIcon={<HiShare size={20} />}
+            >
+              Share Event
+            </SecondaryButton>
+            {isRegistered ? (
+              <PrimaryButton
+                onClick={handleCancel}
+                loading={actionLoading}
+                disabled={actionLoading}
+              >
+                Cancel
+              </PrimaryButton>
+            ) : (
+              <PrimaryButton
+                onClick={handleJoin}
+                loading={actionLoading}
+                disabled={actionLoading}
+              >
+                Join
+              </PrimaryButton>
+            )}
+          </HStack>
+        </HStack>
+      </Box>
     </Box>
   );
-}
-
-function getStatusTag(status: Game["status"]) {
-  switch (status) {
-    case "upcoming":
-      return (
-        <StatusTag variant="custom" bgColor="primary.400">
-          Upcoming
-        </StatusTag>
-      );
-    case "cancelled":
-      return (
-        <StatusTag variant="custom" bgColor="error.500">
-          Cancelled
-        </StatusTag>
-      );
-    case "completed":
-      return (
-        <StatusTag variant="custom" bgColor="gray.500">
-          Completed
-        </StatusTag>
-      );
-    default:
-      return null;
-  }
 }
