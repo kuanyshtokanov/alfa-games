@@ -21,12 +21,40 @@ import { PrimaryButton, SecondaryButton } from "@/components/ui/Button";
 import { formatGameLocation, formatGamePrice } from "@/lib/utils/game";
 import { HiLocationMarker, HiClock, HiShare } from "react-icons/hi";
 import type { Game } from "@/types/game";
+import { toaster } from "@/components/ui/toaster";
 
 interface Player {
   id: string;
   name: string;
   email: string;
   avatar?: string;
+}
+
+type CloudPaymentsWidget = {
+  pay: (
+    type: "charge" | string,
+    options: {
+      publicId?: string;
+      description?: string;
+      amount?: number;
+      currency?: string;
+      accountId?: string | null;
+      skin?: string;
+      data?: Record<string, unknown>;
+    },
+    callbacks: {
+      onSuccess: () => void;
+      onFail: (reason: string) => void;
+    }
+  ) => void;
+};
+
+declare global {
+  interface Window {
+    cp?: {
+      CloudPayments: new () => CloudPaymentsWidget;
+    };
+  }
 }
 
 export default function GameDetailPage() {
@@ -41,6 +69,54 @@ export default function GameDetailPage() {
 
   const gameId = params.id as string;
 
+  const fetchGameData = useCallback(
+    async (options: { showLoader?: boolean } = {}) => {
+      if (!user) return;
+      const { showLoader = true } = options;
+
+      try {
+        if (showLoader) {
+          setLoading(true);
+        }
+        const token = await user.getIdToken();
+
+        // Fetch game details
+        const gameResponse = await fetch(`/api/games/${gameId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!gameResponse.ok) {
+          throw new Error("Failed to fetch game");
+        }
+
+        const gameData = await gameResponse.json();
+        setGame(gameData.game);
+        setIsRegistered(gameData.game.isRegistered || false);
+
+        // Fetch registrations
+        const regResponse = await fetch(`/api/games/${gameId}/registrations`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (regResponse.ok) {
+          const regData = await regResponse.json();
+          setPlayers(regData.players || []);
+        }
+      } catch (error) {
+        console.error("Error fetching game data:", error);
+      } finally {
+        if (showLoader) {
+          setLoading(false);
+        }
+      }
+    },
+    [user, gameId]
+  );
+
   useEffect(() => {
     if (user && gameId) {
       fetchGameData();
@@ -48,45 +124,37 @@ export default function GameDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, gameId]);
 
-  const fetchGameData = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      const token = await user.getIdToken();
-
-      // Fetch game details
-      const gameResponse = await fetch(`/api/games/${gameId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!gameResponse.ok) {
-        throw new Error("Failed to fetch game");
+  useEffect(() => {
+    if (!user || !gameId) return;
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void fetchGameData({ showLoader: false });
       }
+    }, 20000);
 
-      const gameData = await gameResponse.json();
-      setGame(gameData.game);
-      setIsRegistered(gameData.game.isRegistered || false);
+    return () => window.clearInterval(intervalId);
+  }, [user, gameId, fetchGameData]);
 
-      // Fetch registrations
-      const regResponse = await fetch(`/api/games/${gameId}/registrations`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (regResponse.ok) {
-        const regData = await regResponse.json();
-        setPlayers(regData.players || []);
+  useEffect(() => {
+    if (!user || !gameId) return;
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void fetchGameData({ showLoader: false });
       }
-    } catch (error) {
-      console.error("Error fetching game data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, gameId]);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [user, gameId, fetchGameData]);
+
+  const updatePlayerCount = useCallback((delta: number) => {
+    setGame((prev) => {
+      if (!prev) return prev;
+      const nextCount = Math.max(0, prev.currentPlayersCount + delta);
+      return { ...prev, currentPlayersCount: nextCount };
+    });
+  }, []);
 
   const handleJoin = useCallback(async () => {
     if (!user || !game) return;
@@ -97,8 +165,12 @@ export default function GameDetailPage() {
       // TipTopPay Widget Integration
       if (game.price > 0) {
         // Wrap widget payment in a promise
-        await new Promise((resolve, reject) => {
-          const widget = new (window as any).cp.CloudPayments();
+        await new Promise<void>((resolve, reject) => {
+          if (!window.cp?.CloudPayments) {
+            reject(new Error("Payment widget not loaded"));
+            return;
+          }
+          const widget = new window.cp.CloudPayments();
           widget.pay(
             "charge",
             {
@@ -114,11 +186,11 @@ export default function GameDetailPage() {
               },
             },
             {
-              onSuccess: (options: any) => {
-                resolve(options);
+              onSuccess: () => {
+                resolve();
               },
-              onFail: (reason: any, options: any) => {
-                reject(new Error("Payment failed: " + reason));
+              onFail: (reason: string) => {
+                reject(new Error(`Payment failed: ${reason}`));
               },
             }
           );
@@ -136,19 +208,49 @@ export default function GameDetailPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || "Failed to join event");
+        toaster.create({
+          title: "Could not join",
+          description: data.error || "Failed to join event.",
+          type: "error",
+        });
         return;
       }
 
-      // Refresh data
-      await fetchGameData();
+      setIsRegistered(true);
+      updatePlayerCount(1);
+      setPlayers((prev) => {
+        if (prev.some((player) => player.id === user.uid)) return prev;
+        const displayName = user.displayName || user.email || "You";
+        return [
+          {
+            id: user.uid,
+            name: displayName,
+            email: user.email || "",
+            avatar: user.photoURL || undefined,
+          },
+          ...prev,
+        ];
+      });
+
+      toaster.create({
+        title: "You're in!",
+        description: "Your spot is confirmed.",
+        type: "success",
+      });
+
+      // Refresh data without full-page loader
+      void fetchGameData({ showLoader: false });
     } catch (error) {
       console.error("Error joining event:", error);
-      alert("Failed to join event. Please try again.");
+      toaster.create({
+        title: "Payment or join failed",
+        description: "Please try again.",
+        type: "error",
+      });
     } finally {
       setActionLoading(false);
     }
-  }, [user, game, gameId, fetchGameData]);
+  }, [user, game, gameId, fetchGameData, updatePlayerCount]);
 
   const handleCancel = useCallback(async () => {
     if (!user || !game) return;
@@ -166,19 +268,37 @@ export default function GameDetailPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || "Failed to cancel event");
+        toaster.create({
+          title: "Could not cancel",
+          description: data.error || "Failed to cancel event.",
+          type: "error",
+        });
         return;
       }
 
-      // Refresh data
-      await fetchGameData();
+      setIsRegistered(false);
+      updatePlayerCount(-1);
+      setPlayers((prev) => prev.filter((player) => player.id !== user.uid));
+
+      toaster.create({
+        title: "Registration cancelled",
+        description: "Your spot has been released.",
+        type: "success",
+      });
+
+      // Refresh data without full-page loader
+      void fetchGameData({ showLoader: false });
     } catch (error) {
       console.error("Error cancelling event:", error);
-      alert("Failed to cancel event. Please try again.");
+      toaster.create({
+        title: "Cancel failed",
+        description: "Please try again.",
+        type: "error",
+      });
     } finally {
       setActionLoading(false);
     }
-  }, [user, game, gameId, fetchGameData]);
+  }, [user, game, gameId, fetchGameData, updatePlayerCount]);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -190,7 +310,11 @@ export default function GameDetailPage() {
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+      toaster.create({
+        title: "Link copied",
+        description: "Share it with your friends.",
+        type: "success",
+      });
     }
   };
 
@@ -237,19 +361,19 @@ export default function GameDetailPage() {
 
   const dateDisplay = isToday
     ? `Today, ${gameDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })} | ${gameDate.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`
+        month: "short",
+        day: "numeric",
+      })} | ${gameDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
     : `${gameDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })} | ${gameDate.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
+        month: "short",
+        day: "numeric",
+      })} | ${gameDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
 
   return (
     <Box

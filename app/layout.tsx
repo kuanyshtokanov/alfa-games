@@ -31,7 +31,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body>
         <Providers>{children}</Providers>
-        <Script src="https://widget.tiptoppay.kz/bundles/widget.js" strategy="afterInteractive" />
+        <Script
+          src="https://widget.tiptoppay.kz/bundles/widget.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
