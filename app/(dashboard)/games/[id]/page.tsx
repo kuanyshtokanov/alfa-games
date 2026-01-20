@@ -93,6 +93,38 @@ export default function GameDetailPage() {
 
     try {
       setActionLoading(true);
+
+      // TipTopPay Widget Integration
+      if (game.price > 0) {
+        // Wrap widget payment in a promise
+        await new Promise((resolve, reject) => {
+          const widget = new (window as any).cp.CloudPayments();
+          widget.pay(
+            "charge",
+            {
+              publicId: process.env.NEXT_PUBLIC_TIPTOPPAY_PUBLIC_ID,
+              description: `Join game: ${game.title}`,
+              amount: game.price,
+              currency: game.currency || "KZT",
+              accountId: user.email,
+              skin: "mini",
+              data: {
+                gameId: gameId,
+                userId: user.uid,
+              },
+            },
+            {
+              onSuccess: (options: any) => {
+                resolve(options);
+              },
+              onFail: (reason: any, options: any) => {
+                reject(new Error("Payment failed: " + reason));
+              },
+            }
+          );
+        });
+      }
+
       const token = await user.getIdToken();
       const response = await fetch(`/api/games/${gameId}/register`, {
         method: "POST",
@@ -205,19 +237,19 @@ export default function GameDetailPage() {
 
   const dateDisplay = isToday
     ? `Today, ${gameDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })} | ${gameDate.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`
+      month: "short",
+      day: "numeric",
+    })} | ${gameDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`
     : `${gameDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })} | ${gameDate.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`;
+      month: "short",
+      day: "numeric",
+    })} | ${gameDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
 
   return (
     <Box
