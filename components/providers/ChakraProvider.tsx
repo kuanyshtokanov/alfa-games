@@ -19,7 +19,7 @@ export function ChakraProvider({ children }: ChakraProviderProps) {
       {children}
       <Toaster toaster={toaster}>
         {(toast) => (
-          <Toast.Root type={toast.type}>
+          <Toast.Root>
             <Toast.Title>{toast.title}</Toast.Title>
             {toast.description && (
               <Toast.Description>{toast.description}</Toast.Description>
