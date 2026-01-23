@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers/Providers";
 import "./globals.css";
@@ -30,6 +31,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body>
         <Providers>{children}</Providers>
+        <Script
+          src="https://widget.tiptoppay.kz/bundles/widget.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

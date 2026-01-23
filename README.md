@@ -59,6 +59,9 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 STRIPE_WEBHOOK_SECRET=your_webhook_secret
 
+# TipTopPay Configuration
+NEXT_PUBLIC_TIPTOPPAY_PUBLIC_ID=test_api_00000000000000000000002
+
 # App Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```

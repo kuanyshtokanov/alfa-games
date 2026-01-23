@@ -17,18 +17,6 @@ export default function OnboardingPage() {
 
   return (
     <Box minH="100vh" bg="white" position="relative">
-      {/* Onboarding label - top left */}
-      <Box
-        position="absolute"
-        top={4}
-        left={4}
-        color="gray.400"
-        fontSize="sm"
-        fontWeight="medium"
-        zIndex={1}
-      >
-        Onboarding
-      </Box>
 
       <Container maxW="sm" px={4} py={12}>
         <VStack gap={8} align="stretch">
