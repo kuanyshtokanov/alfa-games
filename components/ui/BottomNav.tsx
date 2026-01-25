@@ -8,8 +8,7 @@
 'use client';
 
 import { Box, HStack, VStack, Text } from '@chakra-ui/react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, usePathname } from '@/i18n/routing';
 
 export interface BottomNavItem {
   label: string;
