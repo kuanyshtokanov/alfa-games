@@ -18,6 +18,27 @@
         "emailPlaceholder": "youremail@mail.com",
         "passwordPlaceholder": "Input your password"
     },
+    "GamesPage": {
+        "title": "Find a Match",
+        "searchPlaceholder": "Search by location or title...",
+        "availableEvents": "Available Events",
+        "eventsCount": "{count} {count, plural, =1 {event} other {events}}",
+        "noEvents": "No events found",
+        "cancelEvent": "Cancel Event",
+        "joinEvent": "Join Event",
+        "alerts": {
+            "joinSuccess": "Successfully joined event!",
+            "joinError": "Failed to join event",
+            "cancelSuccess": "Successfully cancelled registration!",
+            "cancelError": "Failed to cancel event"
+        },
+        "filters": {
+            "all": "All Sports",
+            "football": "Football",
+            "basketball": "Basketball",
+            "tennis": "Tennis"
+        }
+    },
     "Navigation": {
         "games": "Games",
         "home": "Home",

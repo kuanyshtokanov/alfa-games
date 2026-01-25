@@ -114,7 +114,7 @@ export default function FindMatchPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          alert(data.error || "Failed to join event");
+          alert(data.error || t("GamesPage.alerts.joinError"));
           return;
         }
 
@@ -134,7 +134,7 @@ export default function FindMatchPage() {
         );
       } catch (error) {
         console.error("Error joining event:", error);
-        alert("Failed to join event. Please try again.");
+        alert(t("GamesPage.alerts.joinError"));
       } finally {
         setActionLoadingGameId(null);
       }
@@ -159,7 +159,7 @@ export default function FindMatchPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          alert(data.error || "Failed to cancel event");
+          alert(data.error || t("GamesPage.alerts.cancelError"));
           return;
         }
 
@@ -176,7 +176,7 @@ export default function FindMatchPage() {
         );
       } catch (error) {
         console.error("Error cancelling event:", error);
-        alert("Failed to cancel event. Please try again.");
+        alert(t("GamesPage.alerts.cancelError"));
       } finally {
         setActionLoadingGameId(null);
       }
@@ -192,10 +192,10 @@ export default function FindMatchPage() {
     <Box minH="100vh" bg="#F8F8F8" pb={20}>
       {/* Green Header */}
       <GreenHeader
-        title="Find a Match"
+        title={t("GamesPage.title")}
         showSearch
         searchValue={searchQuery}
-        searchPlaceholder="Search by location or title..."
+        searchPlaceholder={t("GamesPage.searchPlaceholder")}
         onSearchChange={setSearchQuery}
         showFilter
         onFilterClick={() => {
@@ -211,25 +211,25 @@ export default function FindMatchPage() {
             isActive={selectedSport === "all"}
             onClick={() => setSelectedSport("all")}
           >
-            All Sports
+            {t("GamesPage.filters.all")}
           </FilterButton>
           <FilterButton
             isActive={selectedSport === "football"}
             onClick={() => setSelectedSport("football")}
           >
-            Football
+            {t("GamesPage.filters.football")}
           </FilterButton>
           <FilterButton
             isActive={selectedSport === "basketball"}
             onClick={() => setSelectedSport("basketball")}
           >
-            Basketball
+            {t("GamesPage.filters.basketball")}
           </FilterButton>
           <FilterButton
             isActive={selectedSport === "tennis"}
             onClick={() => setSelectedSport("tennis")}
           >
-            Tennis
+            {t("GamesPage.filters.tennis")}
           </FilterButton>
         </HStack>
       </Box>
@@ -243,7 +243,7 @@ export default function FindMatchPage() {
             color="#111827"
             fontFamily="var(--font-inter), sans-serif"
           >
-            Available Events
+            {t("GamesPage.availableEvents")}
           </Text>
           <Text
             fontSize="14px"
@@ -251,8 +251,7 @@ export default function FindMatchPage() {
             color="#9CA3AF"
             fontFamily="var(--font-inter), sans-serif"
           >
-            {visibleGames.length}{" "}
-            {visibleGames.length === 1 ? "event" : "events"}
+            {t("GamesPage.eventsCount", { count: visibleGames.length })}
           </Text>
         </HStack>
 
@@ -268,7 +267,7 @@ export default function FindMatchPage() {
               color="#9CA3AF"
               fontFamily="var(--font-inter), sans-serif"
             >
-              No events found
+              {t("GamesPage.noEvents")}
             </Text>
           </Box>
         ) : (
@@ -289,7 +288,11 @@ export default function FindMatchPage() {
                       ? handleCancelEvent(game.id)
                       : handleJoinEvent(game.id)
                   }
-                  actionLabel={isRegistered ? "Cancel Event" : "Join Event"}
+                  actionLabel={
+                    isRegistered
+                      ? t("GamesPage.cancelEvent")
+                      : t("GamesPage.joinEvent")
+                  }
                   actionLoading={actionLoading}
                   onCardClick={() => router.push(`/games/${game.id}`)}
                 />

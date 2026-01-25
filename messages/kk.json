@@ -18,6 +18,27 @@
         "emailPlaceholder": "youremail@mail.com",
         "passwordPlaceholder": "Құпия сөзді енгізіңіз"
     },
+    "GamesPage": {
+        "title": "Ойын табу",
+        "searchPlaceholder": "Іздеу...",
+        "availableEvents": "Қолжетімді ойындар",
+        "eventsCount": "{count} оқиға",
+        "noEvents": "Оқиғалар табылмады",
+        "cancelEvent": "Қатысудан бас тарту",
+        "joinEvent": "Қосылу",
+        "alerts": {
+            "joinSuccess": "Сіз сәтті қосылдыңыз!",
+            "joinError": "Қосылу мүмкін болмады",
+            "cancelSuccess": "Тіркелу тоқтатылды!",
+            "cancelError": "Болдырмау мүмкін болмады"
+        },
+        "filters": {
+            "all": "Барлық түрлері",
+            "football": "Футбол",
+            "basketball": "Баскетбол",
+            "tennis": "Теннис"
+        }
+    },
     "Navigation": {
         "games": "Ойындар",
         "home": "Басты",

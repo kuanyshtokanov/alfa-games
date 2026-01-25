@@ -18,6 +18,27 @@
         "emailPlaceholder": "youremail@mail.com",
         "passwordPlaceholder": "Введите ваш пароль"
     },
+    "GamesPage": {
+        "title": "Найти игру",
+        "searchPlaceholder": "Поиск по месту или названию...",
+        "availableEvents": "Доступные игры",
+        "eventsCount": "{count} {count, plural, =1 {событие} few {события} other {событий}}",
+        "noEvents": "События не найдены",
+        "cancelEvent": "Отменить участие",
+        "joinEvent": "Присоединиться",
+        "alerts": {
+            "joinSuccess": "Вы успешно присоединились!",
+            "joinError": "Не удалось присоединиться",
+            "cancelSuccess": "Регистрация отменена!",
+            "cancelError": "Не удалось отменить регистрацию"
+        },
+        "filters": {
+            "all": "Все виды",
+            "football": "Футбол",
+            "basketball": "Баскетбол",
+            "tennis": "Теннис"
+        }
+    },
     "Navigation": {
         "games": "Игры",
         "home": "Главная",
