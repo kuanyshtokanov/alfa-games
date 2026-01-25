@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Center, Spinner, Box } from "@chakra-ui/react";
 

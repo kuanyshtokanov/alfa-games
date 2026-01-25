@@ -1,0 +1,31 @@
+{
+    "HomePage": {
+        "title": "Alfa Games-ке қош келдіңіз",
+        "description": "Футбол ойындарын табуға арналған ең жақсы орын"
+    },
+    "Auth": {
+        "welcome": "Қайта қош келдіңіз!",
+        "subtitle": "Ойындарды табу және жаңа ойыншылармен танысу үшін кіріңіз.",
+        "email": "Электрондық пошта",
+        "password": "Құпия сөз",
+        "forgotPassword": "Құпия сөзді ұмыттыңыз ба?",
+        "resetHere": "Осында қалпына келтіріңіз",
+        "login": "Кіру",
+        "loginWithGoogle": "Google арқылы кіру",
+        "loginWithFacebook": "Facebook арқылы кіру",
+        "noAccount": "Тіркелгіңіз жоқ па?",
+        "register": "Тіркелу",
+        "emailPlaceholder": "youremail@mail.com",
+        "passwordPlaceholder": "Құпия сөзді енгізіңіз"
+    },
+    "Navigation": {
+        "games": "Ойындар",
+        "clubs": "Клубтар",
+        "profile": "Профиль"
+    },
+    "Locale": {
+        "en": "Ағылшын",
+        "ru": "Орыс",
+        "kk": "Қазақ"
+    }
+}

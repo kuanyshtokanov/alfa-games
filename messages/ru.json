@@ -1,0 +1,31 @@
+{
+    "HomePage": {
+        "title": "Добро пожаловать в Alfa Games",
+        "description": "Лучшее место для поиска футбольных игр"
+    },
+    "Auth": {
+        "welcome": "С возвращением!",
+        "subtitle": "Войдите, чтобы найти матчи и познакомиться с новыми игроками.",
+        "email": "Электронная почта",
+        "password": "Пароль",
+        "forgotPassword": "Забыли пароль?",
+        "resetHere": "Сбросить здесь",
+        "login": "Войти",
+        "loginWithGoogle": "Войти через Google",
+        "loginWithFacebook": "Войти через Facebook",
+        "noAccount": "Нет аккаунта?",
+        "register": "Зарегистрироваться",
+        "emailPlaceholder": "youremail@mail.com",
+        "passwordPlaceholder": "Введите ваш пароль"
+    },
+    "Navigation": {
+        "games": "Игры",
+        "clubs": "Клубы",
+        "profile": "Профиль"
+    },
+    "Locale": {
+        "en": "Английский",
+        "ru": "Русский",
+        "kk": "Казахский"
+    }
+}

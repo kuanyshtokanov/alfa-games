@@ -1,0 +1,31 @@
+{
+    "HomePage": {
+        "title": "Welcome to Alfa Games",
+        "description": "The best place to find football games"
+    },
+    "Auth": {
+        "welcome": "Welcome back!",
+        "subtitle": "Sign in to find matches and meet new players.",
+        "email": "Email",
+        "password": "Password",
+        "forgotPassword": "Forgot your password?",
+        "resetHere": "Reset here",
+        "login": "Login",
+        "loginWithGoogle": "Login with Google",
+        "loginWithFacebook": "Login with Facebook",
+        "noAccount": "Don't have an account?",
+        "register": "Register here",
+        "emailPlaceholder": "youremail@mail.com",
+        "passwordPlaceholder": "Input your password"
+    },
+    "Navigation": {
+        "games": "Games",
+        "clubs": "Clubs",
+        "profile": "Profile"
+    },
+    "Locale": {
+        "en": "English",
+        "ru": "Russian",
+        "kk": "Kazakh"
+    }
+}
