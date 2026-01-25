@@ -163,7 +163,7 @@ export default function ProfilePage() {
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-                <Text fontSize="14px">Edit</Text>
+                <Text fontSize="14px">{t("ProfilePage.edit")}</Text>
               </HStack>
             </SecondaryButton>
           </HStack>
@@ -178,7 +178,7 @@ export default function ProfilePage() {
             fontWeight="700"
             fontSize="18px"
           >
-            Your Stats
+            {t("ProfilePage.yourStats")}
           </Heading>
           <SimpleGrid columns={3} gap={3}>
             {/* Matches Played */}
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                   fontFamily="var(--font-inter), sans-serif"
                   textAlign="center"
                 >
-                  Matches Played
+                  {t("ProfilePage.stats.matchesPlayed")}
                 </Text>
               </VStack>
             </Card>
@@ -266,7 +266,7 @@ export default function ProfilePage() {
                   fontFamily="var(--font-inter), sans-serif"
                   textAlign="center"
                 >
-                  Football
+                  {t("ProfilePage.stats.football")}
                 </Text>
               </VStack>
             </Card>
@@ -310,7 +310,7 @@ export default function ProfilePage() {
                   fontFamily="var(--font-inter), sans-serif"
                   textAlign="center"
                 >
-                  Volleyball
+                  {t("ProfilePage.stats.volleyball")}
                 </Text>
               </VStack>
             </Card>
@@ -354,7 +354,7 @@ export default function ProfilePage() {
                   fontFamily="var(--font-inter), sans-serif"
                   textAlign="center"
                 >
-                  Tennis
+                  {t("ProfilePage.stats.tennis")}
                 </Text>
               </VStack>
             </Card>
@@ -370,7 +370,7 @@ export default function ProfilePage() {
             fontWeight="700"
             fontSize="18px"
           >
-            Account
+            {t("ProfilePage.account")}
           </Heading>
 
           <VStack align="stretch" gap={0}>
@@ -410,7 +410,7 @@ export default function ProfilePage() {
                     color="gray.900"
                     fontFamily="var(--font-inter), sans-serif"
                   >
-                    Reset Password
+                    {t("ProfilePage.resetPassword")}
                   </Text>
                 </HStack>
                 <svg
@@ -464,7 +464,7 @@ export default function ProfilePage() {
                     color="gray.900"
                     fontFamily="var(--font-inter), sans-serif"
                   >
-                    FAQs & Help
+                    {t("ProfilePage.faqsHelp")}
                   </Text>
                 </HStack>
                 <svg
@@ -516,7 +516,7 @@ export default function ProfilePage() {
                         color="gray.900"
                         fontFamily="var(--font-inter), sans-serif"
                       >
-                        Language
+                        {t("ProfilePage.language")}
                       </Text>
                       <Text
                         fontSize="12px"
@@ -612,7 +612,7 @@ export default function ProfilePage() {
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
               <Text fontSize="16px" fontWeight="600">
-                Logout
+                {t("ProfilePage.logout")}
               </Text>
             </HStack>
           </SecondaryButton>

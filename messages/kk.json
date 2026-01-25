@@ -39,6 +39,21 @@
             "tennis": "Теннис"
         }
     },
+    "ProfilePage": {
+        "edit": "Өзгерту",
+        "yourStats": "Сіздің статистикаңыз",
+        "stats": {
+            "matchesPlayed": "Ойналған матчтар",
+            "football": "Футбол",
+            "volleyball": "Волейбол",
+            "tennis": "Теннис"
+        },
+        "account": "Аккаунт",
+        "resetPassword": "Құпия сөзді қалпына келтіру",
+        "faqsHelp": "Сұрақтар мен көмек",
+        "language": "Тіл",
+        "logout": "Шығу"
+    },
     "Navigation": {
         "games": "Ойындар",
         "home": "Басты",

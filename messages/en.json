@@ -39,6 +39,21 @@
             "tennis": "Tennis"
         }
     },
+    "ProfilePage": {
+        "edit": "Edit",
+        "yourStats": "Your Stats",
+        "stats": {
+            "matchesPlayed": "Matches Played",
+            "football": "Football",
+            "volleyball": "Volleyball",
+            "tennis": "Tennis"
+        },
+        "account": "Account",
+        "resetPassword": "Reset Password",
+        "faqsHelp": "FAQs & Help",
+        "language": "Language",
+        "logout": "Logout"
+    },
     "Navigation": {
         "games": "Games",
         "home": "Home",

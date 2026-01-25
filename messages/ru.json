@@ -39,6 +39,21 @@
             "tennis": "Теннис"
         }
     },
+    "ProfilePage": {
+        "edit": "Редактировать",
+        "yourStats": "Ваша статистика",
+        "stats": {
+            "matchesPlayed": "Сыграно матчей",
+            "football": "Футбол",
+            "volleyball": "Волейбол",
+            "tennis": "Теннис"
+        },
+        "account": "Аккаунт",
+        "resetPassword": "Сбросить пароль",
+        "faqsHelp": "Вопросы и помощь",
+        "language": "Язык",
+        "logout": "Выйти"
+    },
     "Navigation": {
         "games": "Игры",
         "home": "Главная",
