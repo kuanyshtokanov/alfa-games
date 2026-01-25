@@ -286,7 +286,7 @@ export default function FindMatchPage() {
                   onAction={() =>
                     isRegistered
                       ? handleCancelEvent(game.id)
-                      : handleJoinEvent(game.id)
+                      : router.push(`/games/${game.id}`)
                   }
                   actionLabel={
                     isRegistered
