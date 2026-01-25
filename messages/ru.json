@@ -26,6 +26,82 @@
         "clubs": "Клубы",
         "profile": "Профиль"
     },
+    "Admin": {
+        "Games": {
+            "Create": {
+                "title": "Создать игру",
+                "cancel": "Отмена",
+                "submit": "Создать",
+                "checkingPermissions": "Проверка прав...",
+                "noPermission": "У вас нет прав на создание игр. Только организаторы, администраторы и менеджеры клубов могут создавать игры.",
+                "goBack": "Назад",
+                "labels": {
+                    "title": "Название игры",
+                    "description": "Описание",
+                    "location": "Местоположение",
+                    "address": "Адрес",
+                    "city": "Город",
+                    "country": "Страна",
+                    "dateTime": "Дата и время",
+                    "duration": "Длительность (минуты)",
+                    "maxPlayers": "Макс. игроков",
+                    "price": "Цена",
+                    "currency": "Валюта",
+                    "skillLevel": "Уровень",
+                    "cancellationRule": "Правила отмены",
+                    "rules": "Правила",
+                    "hostInfo": "Информация об организаторе",
+                    "cancellationPolicy": "Политика отмены",
+                    "isPublic": "Сделать игру публичной"
+                },
+                "placeholders": {
+                    "title": "например, Футбольный матч в выходные",
+                    "description": "Опишите вашу игру...",
+                    "address": "Улица, дом",
+                    "city": "Город",
+                    "country": "Страна",
+                    "rules": "Правила игры...",
+                    "hostInfo": "Информация об организаторе...",
+                    "cancellationPolicy": "Детали политики отмены..."
+                },
+                "options": {
+                    "allLevels": "Любой уровень",
+                    "beginner": "Новичок",
+                    "intermediate": "Любитель",
+                    "advanced": "Профи",
+                    "anytime": "В любое время",
+                    "24hours": "За 24 часа",
+                    "48hours": "За 48 часов",
+                    "72hours": "За 72 часа",
+                    "noRefund": "Без возврата",
+                    "custom": "Другое"
+                }
+            },
+            "Manage": {
+                "title": "Управление играми",
+                "noGames": "Игры не найдены",
+                "gamesFound": "Найдено: {count} {count, plural, =1 {игра} few {игры} other {игр}}",
+                "viewDetails": "Подробнее",
+                "edit": "Редактировать",
+                "delete": "Удалить",
+                "deleteConfirmation": "Вы уверены, что хотите удалить эту игру?",
+                "status": {
+                    "all": "Все",
+                    "upcoming": "Предстоящие",
+                    "cancelled": "Отмененные",
+                    "completed": "Завершенные"
+                }
+            },
+            "MyGames": {
+                "title": "Мои игры",
+                "searchPlaceholder": "Поиск по месту или названию...",
+                "upcoming": "Предстоящие",
+                "past": "Прошедшие",
+                "noUpcomingEvents": "Вы не зарегистрированы на предстоящие игры",
+                "noPastEvents": "У вас нет прошедших игр"
+            }
+        }
+    },
     "Locale": {
         "en": "Английский",
         "ru": "Русский",

@@ -26,6 +26,82 @@
         "clubs": "Clubs",
         "profile": "Profile"
     },
+    "Admin": {
+        "Games": {
+            "Create": {
+                "title": "Create Game",
+                "cancel": "Cancel",
+                "submit": "Create Game",
+                "checkingPermissions": "Checking permissions...",
+                "noPermission": "You don't have permission to create games. Only hosts, admins, and club managers can create games.",
+                "goBack": "Go Back",
+                "labels": {
+                    "title": "Game Title",
+                    "description": "Description",
+                    "location": "Location",
+                    "address": "Address",
+                    "city": "City",
+                    "country": "Country",
+                    "dateTime": "Date & Time",
+                    "duration": "Duration (minutes)",
+                    "maxPlayers": "Max Players",
+                    "price": "Price",
+                    "currency": "Currency",
+                    "skillLevel": "Skill Level",
+                    "cancellationRule": "Cancellation Rule",
+                    "rules": "Rules",
+                    "hostInfo": "Host Information",
+                    "cancellationPolicy": "Cancellation Policy",
+                    "isPublic": "Make this game public"
+                },
+                "placeholders": {
+                    "title": "e.g., Weekend Football Match",
+                    "description": "Describe your game...",
+                    "address": "Street address",
+                    "city": "City",
+                    "country": "Country",
+                    "rules": "Game rules...",
+                    "hostInfo": "Information about the host...",
+                    "cancellationPolicy": "Cancellation policy details..."
+                },
+                "options": {
+                    "allLevels": "All Levels",
+                    "beginner": "Beginner",
+                    "intermediate": "Intermediate",
+                    "advanced": "Advanced",
+                    "anytime": "Anytime",
+                    "24hours": "24 Hours",
+                    "48hours": "48 Hours",
+                    "72hours": "72 Hours",
+                    "noRefund": "No Refund",
+                    "custom": "Custom"
+                }
+            },
+            "Manage": {
+                "title": "Manage Games",
+                "noGames": "No games found",
+                "gamesFound": "{count} {count, plural, =1 {game} other {games}} found",
+                "viewDetails": "View Details",
+                "edit": "Edit",
+                "delete": "Delete",
+                "deleteConfirmation": "Are you sure you want to delete this game?",
+                "status": {
+                    "all": "All Status",
+                    "upcoming": "Upcoming",
+                    "cancelled": "Cancelled",
+                    "completed": "Completed"
+                }
+            },
+            "MyGames": {
+                "title": "My Events",
+                "searchPlaceholder": "Search by location or title...",
+                "upcoming": "Upcoming",
+                "past": "Past",
+                "noUpcomingEvents": "You haven't registered for any upcoming events",
+                "noPastEvents": "You don't have any past events"
+            }
+        }
+    },
     "Locale": {
         "en": "English",
         "ru": "Russian",

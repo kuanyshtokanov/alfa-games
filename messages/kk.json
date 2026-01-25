@@ -26,6 +26,82 @@
         "clubs": "Клубтар",
         "profile": "Профиль"
     },
+    "Admin": {
+        "Games": {
+            "Create": {
+                "title": "Ойын құру",
+                "cancel": "Болдырмау",
+                "submit": "Құру",
+                "checkingPermissions": "Құқықтар тексерілуде...",
+                "noPermission": "Ойын құруға құқығыңыз жоқ. Тек ұйымдастырушылар мен әкімшілер ғана ойын құра алады.",
+                "goBack": "Артқа",
+                "labels": {
+                    "title": "Ойын атауы",
+                    "description": "Сипаттама",
+                    "location": "Өтетін орны",
+                    "address": "Мекенжай",
+                    "city": "Қала",
+                    "country": "Ел",
+                    "dateTime": "Күні мен уақыты",
+                    "duration": "Ұзақтығы (мин)",
+                    "maxPlayers": "Ойыншылар саны",
+                    "price": "Бағасы",
+                    "currency": "Валюта",
+                    "skillLevel": "Деңгей",
+                    "cancellationRule": "Болдырмау ережесі",
+                    "rules": "Ережелер",
+                    "hostInfo": "Ұйымдастырушы туралы",
+                    "cancellationPolicy": "Болдырмау саясаты",
+                    "isPublic": "Көпшілікке арналған"
+                },
+                "placeholders": {
+                    "title": "мысалы, Демалыстағы футбол",
+                    "description": "Ойыныңызды сипаттаңыз...",
+                    "address": "Көше, үй",
+                    "city": "Қала",
+                    "country": "Ел",
+                    "rules": "Ойын ережелері...",
+                    "hostInfo": "Ұйымдастырушы туралы ақпарат...",
+                    "cancellationPolicy": "Болдырмау шарттары..."
+                },
+                "options": {
+                    "allLevels": "Барлық деңгей",
+                    "beginner": "Жаңадан бастаушы",
+                    "intermediate": "Әуесқой",
+                    "advanced": "Кәсіпқой",
+                    "anytime": "Кез келген уақытта",
+                    "24hours": "24 сағат бұрын",
+                    "48hours": "48 сағат бұрын",
+                    "72hours": "72 сағат бұрын",
+                    "noRefund": "Қайтарымсыз",
+                    "custom": "Басқа"
+                }
+            },
+            "Manage": {
+                "title": "Ойындарды басқару",
+                "noGames": "Ойындар табылмады",
+                "gamesFound": "{count} ойын табылды",
+                "viewDetails": "Толығырақ",
+                "edit": "Өзгерту",
+                "delete": "Жою",
+                "deleteConfirmation": "Бұл ойынды жойғыңыз келе ме?",
+                "status": {
+                    "all": "Барлығы",
+                    "upcoming": "Алдағы",
+                    "cancelled": "Болдырылмаған",
+                    "completed": "Аяқталған"
+                }
+            },
+            "MyGames": {
+                "title": "Менің ойындарым",
+                "searchPlaceholder": "Іздеу...",
+                "upcoming": "Алдағы",
+                "past": "Өткен",
+                "noUpcomingEvents": "Алдағы ойындарға тіркелмегенсіз",
+                "noPastEvents": "Өткен ойындар жоқ"
+            }
+        }
+    },
     "Locale": {
         "en": "Ағылшын",
         "ru": "Орыс",

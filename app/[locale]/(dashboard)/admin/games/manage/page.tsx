@@ -132,7 +132,7 @@ export default function ManageGamesPage() {
 
   const handleDelete = async (gameId: string) => {
     if (!user) return;
-    if (!confirm("Are you sure you want to delete this game?")) return;
+    if (!confirm(t("Admin.Games.Manage.deleteConfirmation"))) return;
 
     try {
       const token = await user.getIdToken();
@@ -163,7 +163,7 @@ export default function ManageGamesPage() {
   if (loading && !userRole) {
     return (
       <Box minH="100vh" bg="bg.secondary">
-        <Header title="Manage Games" showBackButton />
+        <Header title={t("Admin.Games.Manage.title")} showBackButton />
         <Center py={12}>
           <Spinner size="lg" color="primary.400" />
         </Center>
@@ -178,7 +178,7 @@ export default function ManageGamesPage() {
   return (
     <Box minH="100vh" bg="bg.secondary" pb={20}>
       <Header
-        title="Manage Games"
+        title={t("Admin.Games.Manage.title")}
         showBackButton
         rightContent={
           <HStack gap={2}>
@@ -187,10 +187,10 @@ export default function ManageGamesPage() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="all">All Status</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="completed">Completed</option>
+                <option value="all">{t("Admin.Games.Manage.status.all")}</option>
+                <option value="upcoming">{t("Admin.Games.Manage.status.upcoming")}</option>
+                <option value="cancelled">{t("Admin.Games.Manage.status.cancelled")}</option>
+                <option value="completed">{t("Admin.Games.Manage.status.completed")}</option>
               </NativeSelectField>
             </NativeSelectRoot>
           </HStack>
@@ -211,7 +211,7 @@ export default function ManageGamesPage() {
         ) : games.length === 0 ? (
           <Box bg="white" borderRadius="lg" p={8} textAlign="center">
             <Text color="gray.400" fontSize="lg" fontFamily="var(--font-inter), sans-serif">
-              No games found
+              {t("Admin.Games.Manage.noGames")}
             </Text>
           </Box>
         ) : (
@@ -222,7 +222,7 @@ export default function ManageGamesPage() {
               color="gray.400"
               fontFamily="var(--font-inter), sans-serif"
             >
-              {games.length} {games.length === 1 ? "game" : "games"} found
+              {t("Admin.Games.Manage.gamesFound", { count: games.length })}
             </Text>
             {games.map((game) => {
               const hostId =
@@ -239,7 +239,7 @@ export default function ManageGamesPage() {
                     location={formatGameLocation(game.location)}
                     price={formatGamePrice(game.price, game.currency)}
                     participants={`${game.currentPlayersCount}/${game.maxPlayers}`}
-                    actionLabel="View Details"
+                    actionLabel={t("Admin.Games.Manage.viewDetails")}
                     onAction={() => router.push(`/games/${game.id}`)}
                   />
                   <HStack gap={2} mt={2} justify="flex-end">
@@ -247,7 +247,7 @@ export default function ManageGamesPage() {
                       size="sm"
                       onClick={() => router.push(`/games/${game.id}`)}
                     >
-                      Edit
+                      {t("Admin.Games.Manage.edit")}
                     </SecondaryButton>
                     <PrimaryButton
                       size="sm"
@@ -256,7 +256,7 @@ export default function ManageGamesPage() {
                       _active={{ bg: "error.700" }}
                       onClick={() => handleDelete(game.id)}
                     >
-                      Delete
+                      {t("Admin.Games.Manage.delete")}
                     </PrimaryButton>
                   </HStack>
                 </Box>
