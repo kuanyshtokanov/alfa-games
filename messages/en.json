@@ -47,6 +47,35 @@
         "clubs": "Clubs",
         "profile": "Profile"
     },
+    "AdminPage": {
+        "title": "Admin Dashboard",
+        "welcome": "Welcome, Admin!",
+        "description": "You have full access to manage games and users. Use the links below to access admin features.",
+        "pages": {
+            "manageGames": {
+                "title": "Manage Games",
+                "description": "View, edit, and delete all games"
+            },
+            "setUserRole": {
+                "title": "Set User Role",
+                "description": "Update user roles (admin, host, player)"
+            },
+            "createGame": {
+                "title": "Create Game",
+                "description": "Create a new game"
+            },
+            "myEvents": {
+                "title": "My Events",
+                "description": "View games you've registered for"
+            }
+        },
+        "quickLinks": {
+            "title": "Quick Links:",
+            "findMatch": "Find a Match",
+            "myGames": "My Games",
+            "profile": "Profile"
+        }
+    },
     "Admin": {
         "Games": {
             "Create": {
