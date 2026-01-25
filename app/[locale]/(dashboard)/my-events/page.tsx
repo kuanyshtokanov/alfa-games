@@ -101,10 +101,10 @@ export default function MyEventsPage() {
     <Box minH="100vh" bg="#F8F8F8" pb={20}>
       {/* Green Header */}
       <GreenHeader
-        title="My Events"
+        title={t("Admin.Games.MyGames.title")}
         showSearch
         searchValue={searchQuery}
-        searchPlaceholder="Search by location or title..."
+        searchPlaceholder={t("Admin.Games.MyGames.searchPlaceholder")}
         onSearchChange={setSearchQuery}
         showFilter
         onFilterClick={() => {
@@ -120,13 +120,13 @@ export default function MyEventsPage() {
             isActive={selectedFilter === "upcoming"}
             onClick={() => setSelectedFilter("upcoming")}
           >
-            Upcoming
+            {t("Admin.Games.MyGames.upcoming")}
           </FilterButton>
           <FilterButton
             isActive={selectedFilter === "past"}
             onClick={() => setSelectedFilter("past")}
           >
-            Past
+            {t("Admin.Games.MyGames.past")}
           </FilterButton>
         </HStack>
       </Box>
@@ -158,8 +158,8 @@ export default function MyEventsPage() {
                 fontFamily="var(--font-inter), sans-serif"
               >
                 {selectedFilter === "upcoming"
-                  ? "You haven't registered for any upcoming events"
-                  : "You don't have any past events"}
+                  ? t("Admin.Games.MyGames.noUpcomingEvents")
+                  : t("Admin.Games.MyGames.noPastEvents")}
               </Text>
             </VStack>
           </Card>
@@ -174,7 +174,7 @@ export default function MyEventsPage() {
                   location={formatGameLocation(game.location)}
                   price={formatGamePrice(game.price, game.currency)}
                   participants={`${game.currentPlayersCount} / ${game.maxPlayers} joined`}
-                  actionLabel="View Details"
+                  actionLabel={t("Admin.Games.Manage.viewDetails")}
                   onAction={() => router.push(`/games/${game.id}`)}
                 />
               );
