@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Box, VStack, HStack, Text, Spinner, Center } from "@chakra-ui/react";
 import { GreenHeader } from "@/components/ui/GreenHeader";
@@ -20,6 +21,7 @@ import type { Game } from "@/types/game";
 type EventFilter = "upcoming" | "past";
 
 export default function MyEventsPage() {
+  const t = useTranslations();
   const router = useRouter();
   const { user } = useAuth();
   const [games, setGames] = useState<Game[]>([]);
@@ -27,7 +29,7 @@ export default function MyEventsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<EventFilter>("upcoming");
   const [searchQuery, setSearchQuery] = useState("");
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
 
   useEffect(() => {
     if (user) {
@@ -36,7 +38,11 @@ export default function MyEventsPage() {
       getCurrentUserRole(user).then((userRole) => {
         if (userRole) {
           setNavItems(
-            getBottomNavItems(userRole.role, userRole.isClubManager || false)
+            getBottomNavItems(
+              (key) => t(`Navigation.${key}`),
+              userRole.role,
+              userRole.isClubManager || false
+            )
           );
         }
       });

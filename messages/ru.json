@@ -20,6 +20,9 @@
     },
     "Navigation": {
         "games": "Игры",
+        "home": "Главная",
+        "myEvents": "Мои игры",
+        "admin": "Админ",
         "clubs": "Клубы",
         "profile": "Профиль"
     },

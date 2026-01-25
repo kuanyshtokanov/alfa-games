@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Box,
@@ -31,6 +32,7 @@ import type { Game } from "@/types/game";
 import type { UserRole } from "@/lib/utils/rbac-client";
 
 export default function ManageGamesPage() {
+  const t = useTranslations();
   const router = useRouter();
   const { user } = useAuth();
   const [games, setGames] = useState<Game[]>([]);
@@ -38,7 +40,7 @@ export default function ManageGamesPage() {
   const [error, setError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
 
   useEffect(() => {
     if (user) {
@@ -59,6 +61,7 @@ export default function ManageGamesPage() {
       if (role) {
         setNavItems(
           getBottomNavItems(
+            (key) => t(`Navigation.${key}`),
             role.role,
             role.isClubManager || false
           )
@@ -84,7 +87,7 @@ export default function ManageGamesPage() {
 
       // For admins, fetch all games. For hosts, fetch their own games
       let url = `/api/games?status=${statusFilter === "all" ? "" : statusFilter}`;
-      
+
       if (userRole.role === "host") {
         // Get MongoDB user ID first
         const userResponse = await fetch("/api/auth/me", {
@@ -92,7 +95,7 @@ export default function ManageGamesPage() {
             Authorization: `Bearer ${token}`,
           },
         });
-        
+
         if (userResponse.ok) {
           const userData = await userResponse.json();
           const mongoUserId = userData.user.id;

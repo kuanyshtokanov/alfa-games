@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Box, VStack, HStack, Text, Spinner, Center } from "@chakra-ui/react";
 import { FilterButton } from "@/components/ui/FilterButton";
@@ -20,6 +21,7 @@ import {
 import type { Game } from "@/types/game";
 
 export default function FindMatchPage() {
+  const t = useTranslations();
   const router = useRouter();
   const { user } = useAuth();
   const [games, setGames] = useState<Game[]>([]);
@@ -29,7 +31,7 @@ export default function FindMatchPage() {
   );
   const [selectedSport, setSelectedSport] = useState<SportFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
 
   const fetchGames = useCallback(async () => {
     if (!user) return;
@@ -65,7 +67,11 @@ export default function FindMatchPage() {
       getCurrentUserRole(user).then((userRole) => {
         if (userRole) {
           setNavItems(
-            getBottomNavItems(userRole.role, userRole.isClubManager || false)
+            getBottomNavItems(
+              (key) => t(`Navigation.${key}`),
+              userRole.role,
+              userRole.isClubManager || false
+            )
           );
         }
       });

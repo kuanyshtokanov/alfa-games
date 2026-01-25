@@ -20,6 +20,9 @@
     },
     "Navigation": {
         "games": "Games",
+        "home": "Home",
+        "myEvents": "My Events",
+        "admin": "Admin",
         "clubs": "Clubs",
         "profile": "Profile"
     },

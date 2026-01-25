@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Box,
@@ -29,13 +30,14 @@ import { getCurrentUserRole, canUserCreateGame } from "@/lib/utils/rbac-client";
 import type { GameFormData } from "@/types/game";
 
 export default function CreateGamePage() {
+  const t = useTranslations();
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [canCreate, setCanCreate] = useState(false);
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
   const [formData, setFormData] = useState<GameFormData>({
     title: "",
     description: "",
@@ -154,7 +156,11 @@ export default function CreateGamePage() {
 
         // Update navigation items based on user role
         setNavItems(
-          getBottomNavItems(userRole.role, userRole.isClubManager || false)
+          getBottomNavItems(
+            (key) => t(`Navigation.${key}`),
+            userRole.role,
+            userRole.isClubManager || false
+          )
         );
       } catch (err) {
         console.error("Error checking permissions:", err);

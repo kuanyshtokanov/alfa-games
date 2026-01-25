@@ -48,7 +48,7 @@ export default function ProfilePage() {
     volleyball: 0,
     tennis: 0,
   });
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
 
   useEffect(() => {
     if (!user) {
@@ -63,7 +63,11 @@ export default function ProfilePage() {
         if (userRole) {
           setUserData(userRole);
           setNavItems(
-            getBottomNavItems(userRole.role, userRole.isClubManager || false)
+            getBottomNavItems(
+              (key) => t(`Navigation.${key}`),
+              userRole.role,
+              userRole.isClubManager || false
+            )
           );
         }
 

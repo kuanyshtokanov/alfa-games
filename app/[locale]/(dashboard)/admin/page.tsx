@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Box,
@@ -25,11 +26,12 @@ import type { UserRole } from "@/lib/utils/rbac-client";
  * Central hub for admin pages and actions
  */
 export default function AdminDashboard() {
+  const t = useTranslations();
   const router = useRouter();
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
 
   useEffect(() => {
     const checkRole = async () => {
@@ -45,7 +47,11 @@ export default function AdminDashboard() {
         // Update navigation items based on user role
         if (role) {
           setNavItems(
-            getBottomNavItems(role.role, role.isClubManager || false)
+            getBottomNavItems(
+              (key) => t(`Navigation.${key}`),
+              role.role,
+              role.isClubManager || false
+            )
           );
         }
 
