@@ -41,6 +41,9 @@ type CloudPaymentsWidget = {
       accountId?: string | null;
       skin?: string;
       data?: Record<string, unknown>;
+      paymentMethodSequence?: string[];
+      restrictedPaymentMethods?: string[];
+      tokenize?: boolean;
     },
     callbacks: {
       onSuccess: () => void;
@@ -184,6 +187,10 @@ export default function GameDetailPage() {
                 gameId: gameId,
                 userId: user.uid,
               },
+              paymentMethodSequence: [
+                "Card", "GooglePay", "ApplePay"
+              ],
+              tokenize: true,
             },
             {
               onSuccess: () => {
@@ -361,19 +368,19 @@ export default function GameDetailPage() {
 
   const dateDisplay = isToday
     ? `Today, ${gameDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })} | ${gameDate.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`
+      month: "short",
+      day: "numeric",
+    })} | ${gameDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`
     : `${gameDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })} | ${gameDate.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`;
+      month: "short",
+      day: "numeric",
+    })} | ${gameDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
 
   return (
     <Box

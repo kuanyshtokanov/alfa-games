@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "@/i18n/routing";
+import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Box,
@@ -10,7 +11,6 @@ import {
   Heading,
   Text,
   SimpleGrid,
-  IconButton,
 } from "@chakra-ui/react";
 import { Avatar } from "@/components/ui/Avatar";
 import { SecondaryButton } from "@/components/ui/Button";
@@ -27,18 +27,28 @@ interface UserStats {
   tennis: number;
 }
 
+const LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'ru', label: 'Русский' },
+  { code: 'kk', label: 'Қазақша' },
+];
+
 export default function ProfilePage() {
+  const t = useTranslations();
   const router = useRouter();
+  const pathname = usePathname();
+  const currentLocale = useLocale();
   const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [stats, setStats] = useState<UserStats>({
     matchesPlayed: 0,
     football: 0,
     volleyball: 0,
     tennis: 0,
   });
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
 
   useEffect(() => {
     if (!user) {
@@ -53,7 +63,11 @@ export default function ProfilePage() {
         if (userRole) {
           setUserData(userRole);
           setNavItems(
-            getBottomNavItems(userRole.role, userRole.isClubManager || false)
+            getBottomNavItems(
+              (key) => t(`Navigation.${key}`),
+              userRole.role,
+              userRole.isClubManager || false
+            )
           );
         }
 
@@ -90,10 +104,15 @@ export default function ProfilePage() {
     }
   };
 
+  const handleLanguageChange = (locale: string) => {
+    router.replace(pathname, { locale });
+    setIsLanguageOpen(false);
+  };
+
   if (loading || !user) {
     return (
       <Box minH="100vh" bg="bg.secondary">
-        <GreenHeader title="My Profile" />
+        <GreenHeader title={t('Navigation.profile')} />
       </Box>
     );
   }
@@ -104,7 +123,7 @@ export default function ProfilePage() {
   return (
     <Box minH="100vh" bg="bg.secondary" pb={20}>
       {/* Green Header */}
-      <GreenHeader title="My Profile" />
+      <GreenHeader title={t('Navigation.profile')} />
 
       <Box px={4} pt={6}>
         {/* User Profile Card */}
@@ -144,7 +163,7 @@ export default function ProfilePage() {
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-                <Text fontSize="14px">Edit</Text>
+                <Text fontSize="14px">{t("ProfilePage.edit")}</Text>
               </HStack>
             </SecondaryButton>
           </HStack>
@@ -159,7 +178,7 @@ export default function ProfilePage() {
             fontWeight="700"
             fontSize="18px"
           >
-            Your Stats
+            {t("ProfilePage.yourStats")}
           </Heading>
           <SimpleGrid columns={3} gap={3}>
             {/* Matches Played */}
@@ -203,7 +222,7 @@ export default function ProfilePage() {
                   fontFamily="var(--font-inter), sans-serif"
                   textAlign="center"
                 >
-                  Matches Played
+                  {t("ProfilePage.stats.matchesPlayed")}
                 </Text>
               </VStack>
             </Card>
@@ -247,7 +266,7 @@ export default function ProfilePage() {
                   fontFamily="var(--font-inter), sans-serif"
                   textAlign="center"
                 >
-                  Football
+                  {t("ProfilePage.stats.football")}
                 </Text>
               </VStack>
             </Card>
@@ -291,7 +310,7 @@ export default function ProfilePage() {
                   fontFamily="var(--font-inter), sans-serif"
                   textAlign="center"
                 >
-                  Volleyball
+                  {t("ProfilePage.stats.volleyball")}
                 </Text>
               </VStack>
             </Card>
@@ -335,7 +354,7 @@ export default function ProfilePage() {
                   fontFamily="var(--font-inter), sans-serif"
                   textAlign="center"
                 >
-                  Tennis
+                  {t("ProfilePage.stats.tennis")}
                 </Text>
               </VStack>
             </Card>
@@ -351,7 +370,7 @@ export default function ProfilePage() {
             fontWeight="700"
             fontSize="18px"
           >
-            Account
+            {t("ProfilePage.account")}
           </Heading>
 
           <VStack align="stretch" gap={0}>
@@ -391,7 +410,7 @@ export default function ProfilePage() {
                     color="gray.900"
                     fontFamily="var(--font-inter), sans-serif"
                   >
-                    Reset Password
+                    {t("ProfilePage.resetPassword")}
                   </Text>
                 </HStack>
                 <svg
@@ -445,7 +464,7 @@ export default function ProfilePage() {
                     color="gray.900"
                     fontFamily="var(--font-inter), sans-serif"
                   >
-                    FAQs & Help
+                    {t("ProfilePage.faqsHelp")}
                   </Text>
                 </HStack>
                 <svg
@@ -466,53 +485,110 @@ export default function ProfilePage() {
             <Card
               cursor="pointer"
               _hover={{ bg: "gray.50" }}
-              onClick={() => {
-                // TODO: Implement language selection
-                console.log("Language");
-              }}
+              onClick={() => setIsLanguageOpen(!isLanguageOpen)}
             >
-              <HStack justify="space-between" py={3}>
-                <HStack gap={3}>
-                  <Box
-                    w="24px"
-                    h="24px"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      color="gray.600"
+              <VStack align="stretch" gap={0}>
+                <HStack justify="space-between" py={3}>
+                  <HStack gap={3}>
+                    <Box
+                      w="24px"
+                      h="24px"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
                     >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                    </svg>
-                  </Box>
-                  <Text
-                    fontSize="16px"
-                    color="gray.900"
-                    fontFamily="var(--font-inter), sans-serif"
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        color="gray.600"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                      </svg>
+                    </Box>
+                    <VStack align="start" gap={0}>
+                      <Text
+                        fontSize="16px"
+                        color="gray.900"
+                        fontFamily="var(--font-inter), sans-serif"
+                      >
+                        {t("ProfilePage.language")}
+                      </Text>
+                      <Text
+                        fontSize="12px"
+                        color="gray.500"
+                      >
+                        {LANGUAGES.find(l => l.code === currentLocale)?.label}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    color="gray.400"
+                    style={{
+                      transform: isLanguageOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s"
+                    }}
                   >
-                    Language
-                  </Text>
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
                 </HStack>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  color="gray.400"
-                >
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
-              </HStack>
+
+                {isLanguageOpen && (
+                  <VStack
+                    align="stretch"
+                    gap={0}
+                    borderTop="1px solid"
+                    borderColor="gray.100"
+                    pt={2}
+                  >
+                    {LANGUAGES.map((lang) => (
+                      <HStack
+                        key={lang.code}
+                        py={3}
+                        px={2}
+                        justify="space-between"
+                        cursor="pointer"
+                        _hover={{ bg: "gray.50" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLanguageChange(lang.code);
+                        }}
+                      >
+                        <Text
+                          fontSize="14px"
+                          color={currentLocale === lang.code ? "green.600" : "gray.700"}
+                          fontWeight={currentLocale === lang.code ? "600" : "400"}
+                        >
+                          {lang.label}
+                        </Text>
+                        {currentLocale === lang.code && (
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            color="#16a34a" // green.600
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </HStack>
+                    ))}
+                  </VStack>
+                )}
+              </VStack>
             </Card>
           </VStack>
 
@@ -536,7 +612,7 @@ export default function ProfilePage() {
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
               <Text fontSize="16px" fontWeight="600">
-                Logout
+                {t("ProfilePage.logout")}
               </Text>
             </HStack>
           </SecondaryButton>

@@ -1,0 +1,175 @@
+{
+    "HomePage": {
+        "title": "Добро пожаловать в Alfa Games",
+        "description": "Лучшее место для поиска футбольных игр"
+    },
+    "Auth": {
+        "welcome": "С возвращением!",
+        "subtitle": "Войдите, чтобы найти матчи и познакомиться с новыми игроками.",
+        "email": "Электронная почта",
+        "password": "Пароль",
+        "forgotPassword": "Забыли пароль?",
+        "resetHere": "Сбросить здесь",
+        "login": "Войти",
+        "loginWithGoogle": "Войти через Google",
+        "loginWithFacebook": "Войти через Facebook",
+        "noAccount": "Нет аккаунта?",
+        "register": "Зарегистрироваться",
+        "emailPlaceholder": "youremail@mail.com",
+        "passwordPlaceholder": "Введите ваш пароль"
+    },
+    "GamesPage": {
+        "title": "Найти игру",
+        "searchPlaceholder": "Поиск по месту или названию...",
+        "availableEvents": "Доступные игры",
+        "eventsCount": "{count} {count, plural, =1 {событие} few {события} other {событий}}",
+        "noEvents": "События не найдены",
+        "cancelEvent": "Отменить участие",
+        "joinEvent": "Присоединиться",
+        "alerts": {
+            "joinSuccess": "Вы успешно присоединились!",
+            "joinError": "Не удалось присоединиться",
+            "cancelSuccess": "Регистрация отменена!",
+            "cancelError": "Не удалось отменить регистрацию"
+        },
+        "filters": {
+            "all": "Все виды",
+            "football": "Футбол",
+            "basketball": "Баскетбол",
+            "tennis": "Теннис"
+        }
+    },
+    "ProfilePage": {
+        "edit": "Редактировать",
+        "yourStats": "Ваша статистика",
+        "stats": {
+            "matchesPlayed": "Сыграно матчей",
+            "football": "Футбол",
+            "volleyball": "Волейбол",
+            "tennis": "Теннис"
+        },
+        "account": "Аккаунт",
+        "resetPassword": "Сбросить пароль",
+        "faqsHelp": "Вопросы и помощь",
+        "language": "Язык",
+        "logout": "Выйти"
+    },
+    "Navigation": {
+        "games": "Игры",
+        "home": "Главная",
+        "myEvents": "Мои игры",
+        "admin": "Админ",
+        "clubs": "Клубы",
+        "profile": "Профиль"
+    },
+    "AdminPage": {
+        "title": "Панель администратора",
+        "welcome": "Добро пожаловать, Администратор!",
+        "description": "У вас есть полный доступ к управлению играми и пользователями. Используйте ссылки ниже для доступа к функциям администратора.",
+        "pages": {
+            "manageGames": {
+                "title": "Управление играми",
+                "description": "Просмотр, редактирование и удаление всех игр"
+            },
+            "setUserRole": {
+                "title": "Установить роль пользователя",
+                "description": "Обновление ролей пользователей (админ, организатор, игрок)"
+            },
+            "createGame": {
+                "title": "Создать игру",
+                "description": "Создать новую игру"
+            },
+            "myEvents": {
+                "title": "Мои игры",
+                "description": "Просмотр игр, на которые вы зарегистрированы"
+            }
+        },
+        "quickLinks": {
+            "title": "Быстрые ссылки:",
+            "findMatch": "Найти игру",
+            "myGames": "Мои игры",
+            "profile": "Профиль"
+        }
+    },
+    "Admin": {
+        "Games": {
+            "Create": {
+                "title": "Создать игру",
+                "cancel": "Отмена",
+                "submit": "Создать",
+                "checkingPermissions": "Проверка прав...",
+                "noPermission": "У вас нет прав на создание игр. Только организаторы, администраторы и менеджеры клубов могут создавать игры.",
+                "goBack": "Назад",
+                "labels": {
+                    "title": "Название игры",
+                    "description": "Описание",
+                    "location": "Местоположение",
+                    "address": "Адрес",
+                    "city": "Город",
+                    "country": "Страна",
+                    "dateTime": "Дата и время",
+                    "duration": "Длительность (минуты)",
+                    "maxPlayers": "Макс. игроков",
+                    "price": "Цена",
+                    "currency": "Валюта",
+                    "skillLevel": "Уровень",
+                    "cancellationRule": "Правила отмены",
+                    "rules": "Правила",
+                    "hostInfo": "Информация об организаторе",
+                    "cancellationPolicy": "Политика отмены",
+                    "isPublic": "Сделать игру публичной"
+                },
+                "placeholders": {
+                    "title": "например, Футбольный матч в выходные",
+                    "description": "Опишите вашу игру...",
+                    "address": "Улица, дом",
+                    "city": "Город",
+                    "country": "Страна",
+                    "rules": "Правила игры...",
+                    "hostInfo": "Информация об организаторе...",
+                    "cancellationPolicy": "Детали политики отмены..."
+                },
+                "options": {
+                    "allLevels": "Любой уровень",
+                    "beginner": "Новичок",
+                    "intermediate": "Любитель",
+                    "advanced": "Профи",
+                    "anytime": "В любое время",
+                    "24hours": "За 24 часа",
+                    "48hours": "За 48 часов",
+                    "72hours": "За 72 часа",
+                    "noRefund": "Без возврата",
+                    "custom": "Другое"
+                }
+            },
+            "Manage": {
+                "title": "Управление играми",
+                "noGames": "Игры не найдены",
+                "gamesFound": "Найдено: {count} {count, plural, =1 {игра} few {игры} other {игр}}",
+                "viewDetails": "Подробнее",
+                "edit": "Редактировать",
+                "delete": "Удалить",
+                "deleteConfirmation": "Вы уверены, что хотите удалить эту игру?",
+                "status": {
+                    "all": "Все",
+                    "upcoming": "Предстоящие",
+                    "cancelled": "Отмененные",
+                    "completed": "Завершенные"
+                }
+            },
+            "MyGames": {
+                "title": "Мои игры",
+                "searchPlaceholder": "Поиск по месту или названию...",
+                "upcoming": "Предстоящие",
+                "past": "Прошедшие",
+                "noUpcomingEvents": "Вы не зарегистрированы на предстоящие игры",
+                "noPastEvents": "У вас нет прошедших игр"
+            }
+        }
+    },
+    "Locale": {
+        "en": "Английский",
+        "ru": "Русский",
+        "kk": "Казахский"
+    }
+}

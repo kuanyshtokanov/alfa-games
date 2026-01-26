@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Box,
@@ -25,11 +26,12 @@ import type { UserRole } from "@/lib/utils/rbac-client";
  * Central hub for admin pages and actions
  */
 export default function AdminDashboard() {
+  const t = useTranslations();
   const router = useRouter();
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
 
   useEffect(() => {
     const checkRole = async () => {
@@ -45,7 +47,11 @@ export default function AdminDashboard() {
         // Update navigation items based on user role
         if (role) {
           setNavItems(
-            getBottomNavItems(role.role, role.isClubManager || false)
+            getBottomNavItems(
+              (key) => t(`Navigation.${key}`),
+              role.role,
+              role.isClubManager || false
+            )
           );
         }
 
@@ -71,7 +77,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <Box minH="100vh" bg="bg.secondary">
-        <Header title="Admin Dashboard" showBackButton />
+        <Header title={t("AdminPage.title")} showBackButton />
         <Center py={12}>
           <Spinner size="lg" color="primary.400" />
         </Center>
@@ -85,26 +91,26 @@ export default function AdminDashboard() {
 
   const adminPages = [
     {
-      title: "Manage Games",
-      description: "View, edit, and delete all games",
+      title: t("AdminPage.pages.manageGames.title"),
+      description: t("AdminPage.pages.manageGames.description"),
       href: "/admin/games/manage",
       icon: "🎮",
     },
     {
-      title: "Set User Role",
-      description: "Update user roles (admin, host, player)",
+      title: t("AdminPage.pages.setUserRole.title"),
+      description: t("AdminPage.pages.setUserRole.description"),
       href: "/admin/set-role",
       icon: "👤",
     },
     {
-      title: "Create Game",
-      description: "Create a new game",
+      title: t("AdminPage.pages.createGame.title"),
+      description: t("AdminPage.pages.createGame.description"),
       href: "/admin/games/create",
       icon: "➕",
     },
     {
-      title: "My Events",
-      description: "View games you've registered for",
+      title: t("AdminPage.pages.myEvents.title"),
+      description: t("AdminPage.pages.myEvents.description"),
       href: "/my-events",
       icon: "📅",
     },
@@ -112,7 +118,7 @@ export default function AdminDashboard() {
 
   return (
     <Box minH="100vh" bg="bg.secondary" pb={20}>
-      <Header title="Admin Dashboard" showBackButton />
+      <Header title={t("AdminPage.title")} showBackButton />
       <Box p={4} maxW="800px" mx="auto">
         <VStack gap={4} align="stretch">
           <Card>
@@ -123,15 +129,14 @@ export default function AdminDashboard() {
                 color="gray.900"
                 fontFamily="var(--font-inter), sans-serif"
               >
-                Welcome, Admin!
+                {t("AdminPage.welcome")}
               </Text>
               <Text
                 fontSize="sm"
                 color="gray.400"
                 fontFamily="var(--font-inter), sans-serif"
               >
-                You have full access to manage games and users. Use the links
-                below to access admin features.
+                {t("AdminPage.description")}
               </Text>
             </VStack>
           </Card>
@@ -188,7 +193,7 @@ export default function AdminDashboard() {
                 color="gray.900"
                 fontFamily="var(--font-inter), sans-serif"
               >
-                Quick Links:
+                {t("AdminPage.quickLinks.title")}
               </Text>
               <VStack align="stretch" gap={2}>
                 <ChakraLink
@@ -199,7 +204,7 @@ export default function AdminDashboard() {
                   fontFamily="var(--font-inter), sans-serif"
                   _hover={{ color: "primary.600" }}
                 >
-                  • Find a Match
+                  • {t("AdminPage.quickLinks.findMatch")}
                 </ChakraLink>
                 <ChakraLink
                   as={Link}
@@ -209,7 +214,7 @@ export default function AdminDashboard() {
                   fontFamily="var(--font-inter), sans-serif"
                   _hover={{ color: "primary.600" }}
                 >
-                  • My Games
+                  • {t("AdminPage.quickLinks.myGames")}
                 </ChakraLink>
                 <ChakraLink
                   as={Link}
@@ -219,7 +224,7 @@ export default function AdminDashboard() {
                   fontFamily="var(--font-inter), sans-serif"
                   _hover={{ color: "primary.600" }}
                 >
-                  • Profile
+                  • {t("AdminPage.quickLinks.profile")}
                 </ChakraLink>
               </VStack>
             </VStack>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Box,
@@ -29,13 +30,14 @@ import { getCurrentUserRole, canUserCreateGame } from "@/lib/utils/rbac-client";
 import type { GameFormData } from "@/types/game";
 
 export default function CreateGamePage() {
+  const t = useTranslations();
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkingPermissions, setCheckingPermissions] = useState(true);
   const [canCreate, setCanCreate] = useState(false);
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
   const [formData, setFormData] = useState<GameFormData>({
     title: "",
     description: "",
@@ -154,7 +156,11 @@ export default function CreateGamePage() {
 
         // Update navigation items based on user role
         setNavItems(
-          getBottomNavItems(userRole.role, userRole.isClubManager || false)
+          getBottomNavItems(
+            (key) => t(`Navigation.${key}`),
+            userRole.role,
+            userRole.isClubManager || false
+          )
         );
       } catch (err) {
         console.error("Error checking permissions:", err);
@@ -264,10 +270,10 @@ export default function CreateGamePage() {
   if (checkingPermissions) {
     return (
       <Box minH="100vh" bg="bg.secondary">
-        <Header title="Create Game" showBackButton />
+        <Header title={t("Admin.Games.Create.title")} showBackButton />
         <Center py={12}>
           <Text color="gray.900" fontFamily="var(--font-inter), sans-serif">
-            Checking permissions...
+            {t("Admin.Games.Create.checkingPermissions")}
           </Text>
         </Center>
       </Box>
@@ -277,19 +283,18 @@ export default function CreateGamePage() {
   if (!canCreate) {
     return (
       <Box minH="100vh" bg="bg.secondary">
-        <Header title="Create Game" showBackButton />
+        <Header title={t("Admin.Games.Create.title")} showBackButton />
         <Box p={4} maxW="800px" mx="auto">
           <Card>
             <VStack gap={4} py={8}>
               <AlertRoot status="error">
                 <AlertIndicator />
                 <AlertContent>
-                  You don&apos;t have permission to create games. Only hosts,
-                  admins, and club managers can create games.
+                  {t("Admin.Games.Create.noPermission")}
                 </AlertContent>
               </AlertRoot>
               <SecondaryButton onClick={() => router.back()}>
-                Go Back
+                {t("Admin.Games.Create.goBack")}
               </SecondaryButton>
             </VStack>
           </Card>
@@ -300,7 +305,7 @@ export default function CreateGamePage() {
 
   return (
     <Box minH="100vh" bg="bg.secondary" pb={20}>
-      <Header title="Create Game" showBackButton />
+      <Header title={t("Admin.Games.Create.title")} showBackButton />
       <Box p={4} maxW="800px" mx="auto">
         <Card>
           <form onSubmit={handleSubmit}>
@@ -313,22 +318,22 @@ export default function CreateGamePage() {
               )}
 
               <FieldRoot required>
-                <StyledFieldLabel>Game Title</StyledFieldLabel>
+                <StyledFieldLabel>{t("Admin.Games.Create.labels.title")}</StyledFieldLabel>
                 <TextInput
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  placeholder="e.g., Weekend Football Match"
+                  placeholder={t("Admin.Games.Create.placeholders.title")}
                 />
               </FieldRoot>
 
               <FieldRoot>
-                <StyledFieldLabel>Description</StyledFieldLabel>
+                <StyledFieldLabel>{t("Admin.Games.Create.labels.description")}</StyledFieldLabel>
                 <TextArea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Describe your game..."
+                  placeholder={t("Admin.Games.Create.placeholders.description")}
                   rows={4}
                 />
               </FieldRoot>
@@ -339,34 +344,34 @@ export default function CreateGamePage() {
                   color="gray.900"
                   fontFamily="var(--font-inter), sans-serif"
                 >
-                  Location
+                  {t("Admin.Games.Create.labels.location")}
                 </Heading>
                 <FieldRoot required>
-                  <StyledFieldLabel>Address</StyledFieldLabel>
+                  <StyledFieldLabel>{t("Admin.Games.Create.labels.address")}</StyledFieldLabel>
                   <TextInput
                     name="location.address"
                     value={formData.location.address}
                     onChange={handleInputChange}
-                    placeholder="Street address"
+                    placeholder={t("Admin.Games.Create.placeholders.address")}
                   />
                 </FieldRoot>
                 <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                   <FieldRoot>
-                    <StyledFieldLabel>City</StyledFieldLabel>
+                    <StyledFieldLabel>{t("Admin.Games.Create.labels.city")}</StyledFieldLabel>
                     <TextInput
                       name="location.city"
                       value={formData.location.city}
                       onChange={handleInputChange}
-                      placeholder="City"
+                      placeholder={t("Admin.Games.Create.placeholders.city")}
                     />
                   </FieldRoot>
                   <FieldRoot>
-                    <StyledFieldLabel>Country</StyledFieldLabel>
+                    <StyledFieldLabel>{t("Admin.Games.Create.labels.country")}</StyledFieldLabel>
                     <TextInput
                       name="location.country"
                       value={formData.location.country}
                       onChange={handleInputChange}
-                      placeholder="Country"
+                      placeholder={t("Admin.Games.Create.placeholders.country")}
                     />
                   </FieldRoot>
                 </SimpleGrid>
@@ -374,7 +379,7 @@ export default function CreateGamePage() {
 
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                 <FieldRoot required>
-                  <StyledFieldLabel>Date & Time</StyledFieldLabel>
+                  <StyledFieldLabel>{t("Admin.Games.Create.labels.dateTime")}</StyledFieldLabel>
                   <TextInput
                     name="datetime"
                     type="datetime-local"
@@ -383,7 +388,7 @@ export default function CreateGamePage() {
                   />
                 </FieldRoot>
                 <FieldRoot required>
-                  <StyledFieldLabel>Duration (minutes)</StyledFieldLabel>
+                  <StyledFieldLabel>{t("Admin.Games.Create.labels.duration")}</StyledFieldLabel>
                   <TextInput
                     name="duration"
                     type="number"
@@ -396,7 +401,7 @@ export default function CreateGamePage() {
 
               <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
                 <FieldRoot required>
-                  <StyledFieldLabel>Max Players</StyledFieldLabel>
+                  <StyledFieldLabel>{t("Admin.Games.Create.labels.maxPlayers")}</StyledFieldLabel>
                   <TextInput
                     name="maxPlayers"
                     type="number"
@@ -406,7 +411,7 @@ export default function CreateGamePage() {
                   />
                 </FieldRoot>
                 <FieldRoot required>
-                  <StyledFieldLabel>Price</StyledFieldLabel>
+                  <StyledFieldLabel>{t("Admin.Games.Create.labels.price")}</StyledFieldLabel>
                   <TextInput
                     name="price"
                     type="number"
@@ -417,7 +422,7 @@ export default function CreateGamePage() {
                   />
                 </FieldRoot>
                 <FieldRoot required>
-                  <StyledFieldLabel>Currency</StyledFieldLabel>
+                  <StyledFieldLabel>{t("Admin.Games.Create.labels.currency")}</StyledFieldLabel>
                   <NativeSelectRoot>
                     <NativeSelectField
                       name="currency"
@@ -435,68 +440,68 @@ export default function CreateGamePage() {
 
               <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
                 <FieldRoot>
-                  <StyledFieldLabel>Skill Level</StyledFieldLabel>
+                  <StyledFieldLabel>{t("Admin.Games.Create.labels.skillLevel")}</StyledFieldLabel>
                   <NativeSelectRoot>
                     <NativeSelectField
                       name="skillLevel"
                       value={formData.skillLevel}
                       onChange={handleInputChange}
                     >
-                      <option value="all">All Levels</option>
-                      <option value="beginner">Beginner</option>
-                      <option value="intermediate">Intermediate</option>
-                      <option value="advanced">Advanced</option>
+                      <option value="all">{t("Admin.Games.Create.options.allLevels")}</option>
+                      <option value="beginner">{t("Admin.Games.Create.options.beginner")}</option>
+                      <option value="intermediate">{t("Admin.Games.Create.options.intermediate")}</option>
+                      <option value="advanced">{t("Admin.Games.Create.options.advanced")}</option>
                     </NativeSelectField>
                   </NativeSelectRoot>
                 </FieldRoot>
                 <FieldRoot>
-                  <StyledFieldLabel>Cancellation Rule</StyledFieldLabel>
+                  <StyledFieldLabel>{t("Admin.Games.Create.labels.cancellationRule")}</StyledFieldLabel>
                   <NativeSelectRoot>
                     <NativeSelectField
                       name="cancellationRule"
                       value={formData.cancellationRule}
                       onChange={handleInputChange}
                     >
-                      <option value="anytime">Anytime</option>
-                      <option value="24hours">24 Hours</option>
-                      <option value="48hours">48 Hours</option>
-                      <option value="72hours">72 Hours</option>
-                      <option value="no_refund">No Refund</option>
-                      <option value="custom">Custom</option>
+                      <option value="anytime">{t("Admin.Games.Create.options.anytime")}</option>
+                      <option value="24hours">{t("Admin.Games.Create.options.24hours")}</option>
+                      <option value="48hours">{t("Admin.Games.Create.options.48hours")}</option>
+                      <option value="72hours">{t("Admin.Games.Create.options.72hours")}</option>
+                      <option value="no_refund">{t("Admin.Games.Create.options.noRefund")}</option>
+                      <option value="custom">{t("Admin.Games.Create.options.custom")}</option>
                     </NativeSelectField>
                   </NativeSelectRoot>
                 </FieldRoot>
               </SimpleGrid>
 
               <FieldRoot>
-                <StyledFieldLabel>Rules</StyledFieldLabel>
+                <StyledFieldLabel>{t("Admin.Games.Create.labels.rules")}</StyledFieldLabel>
                 <TextArea
                   name="rules"
                   value={formData.rules}
                   onChange={handleInputChange}
-                  placeholder="Game rules..."
+                  placeholder={t("Admin.Games.Create.placeholders.rules")}
                   rows={3}
                 />
               </FieldRoot>
 
               <FieldRoot>
-                <StyledFieldLabel>Host Information</StyledFieldLabel>
+                <StyledFieldLabel>{t("Admin.Games.Create.labels.hostInfo")}</StyledFieldLabel>
                 <TextArea
                   name="hostInfo"
                   value={formData.hostInfo}
                   onChange={handleInputChange}
-                  placeholder="Information about the host..."
+                  placeholder={t("Admin.Games.Create.placeholders.hostInfo")}
                   rows={2}
                 />
               </FieldRoot>
 
               <FieldRoot>
-                <StyledFieldLabel>Cancellation Policy</StyledFieldLabel>
+                <StyledFieldLabel>{t("Admin.Games.Create.labels.cancellationPolicy")}</StyledFieldLabel>
                 <TextArea
                   name="cancellationPolicy"
                   value={formData.cancellationPolicy}
                   onChange={handleInputChange}
-                  placeholder="Cancellation policy details..."
+                  placeholder={t("Admin.Games.Create.placeholders.cancellationPolicy")}
                   rows={2}
                 />
               </FieldRoot>
@@ -511,7 +516,7 @@ export default function CreateGamePage() {
                     id="isPublic"
                   />
                   <StyledFieldLabel htmlFor="isPublic" mb={0}>
-                    Make this game public
+                    {t("Admin.Games.Create.labels.isPublic")}
                   </StyledFieldLabel>
                 </HStack>
               </FieldRoot>
@@ -522,10 +527,10 @@ export default function CreateGamePage() {
                   onClick={() => router.back()}
                   flex={1}
                 >
-                  Cancel
+                  {t("Admin.Games.Create.cancel")}
                 </SecondaryButton>
                 <PrimaryButton type="submit" loading={loading} flex={1}>
-                  Create Game
+                  {t("Admin.Games.Create.submit")}
                 </PrimaryButton>
               </HStack>
             </VStack>

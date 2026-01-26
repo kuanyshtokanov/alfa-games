@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRouter, Link as NextLink } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import {
   Box,
   Container,
@@ -25,6 +27,7 @@ import {
 } from "@/components/ui/Button";
 
 function LoginForm() {
+  const t = useTranslations('Auth');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -122,7 +125,7 @@ function LoginForm() {
               fontFamily="var(--font-inter), sans-serif"
               mb={2}
             >
-              Welcome back!
+              {t('welcome')}
             </Heading>
             <Text
               fontSize="14px"
@@ -130,7 +133,7 @@ function LoginForm() {
               color="#9CA3AF"
               fontFamily="var(--font-inter), sans-serif"
             >
-              Sign in to find matches and meet new players.
+              {t('subtitle')}
             </Text>
           </Box>
 
@@ -151,7 +154,7 @@ function LoginForm() {
                   fontFamily="var(--font-inter), sans-serif"
                   mb={2}
                 >
-                  Email
+                  {t('email')}
                 </FieldLabel>
                 <Box position="relative" w="full">
                   <svg
@@ -178,7 +181,7 @@ function LoginForm() {
                     value={email}
                     onChange={handleEmailChange}
                     onBlur={handleEmailBlur}
-                    placeholder="youremail@mail.com"
+                    placeholder={t('emailPlaceholder')}
                     pl={12}
                     pr={4}
                     py={3}
@@ -224,7 +227,7 @@ function LoginForm() {
                   fontFamily="var(--font-inter), sans-serif"
                   mb={2}
                 >
-                  Password
+                  {t('password')}
                 </FieldLabel>
                 <Box position="relative" w="full">
                   <svg
@@ -250,7 +253,7 @@ function LoginForm() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Input your password"
+                    placeholder={t('passwordPlaceholder')}
                     pl={12}
                     pr={12}
                     py={3}
@@ -318,15 +321,16 @@ function LoginForm() {
                   fontFamily="var(--font-inter), sans-serif"
                   textAlign="center"
                 >
-                  Forgot your password?{" "}
+                  {t('forgotPassword')}{" "}
                   <Link
+                    as={NextLink}
                     href="/forgot-password"
                     color="#3CB371"
                     fontWeight="600"
                     textDecoration="none"
                     _hover={{ textDecoration: "underline" }}
                   >
-                    Reset here
+                    {t('resetHere')}
                   </Link>
                 </Text>
               </Box>
@@ -338,10 +342,10 @@ function LoginForm() {
                   loading={loading}
                   loadingText="Signing in..."
                 >
-                  Login
+                  {t('login')}
                 </PrimaryButton>
               ) : (
-                <DisabledButton w="full">Login</DisabledButton>
+                <DisabledButton w="full">{t('login')}</DisabledButton>
               )}
             </VStack>
 
@@ -376,7 +380,7 @@ function LoginForm() {
                     />
                   </svg>
                   <Text fontFamily="var(--font-inter), sans-serif">
-                    Login with Google
+                    {t('loginWithGoogle')}
                   </Text>
                 </HStack>
               </SecondaryButton>
@@ -399,7 +403,7 @@ function LoginForm() {
                     />
                   </svg>
                   <Text fontFamily="var(--font-inter), sans-serif">
-                    Login with Apple
+                    {t('loginWithFacebook')}
                   </Text>
                 </HStack>
               </SecondaryButton>
@@ -413,15 +417,16 @@ function LoginForm() {
               color="#9CA3AF"
               fontFamily="var(--font-inter), sans-serif"
             >
-              Don&apos;t have an account?{" "}
+              {t('noAccount')}{" "}
               <Link
+                as={NextLink}
                 href="/signup"
                 color="#3CB371"
                 fontWeight="600"
                 textDecoration="none"
                 _hover={{ textDecoration: "underline" }}
               >
-                Register here
+                {t('register')}
               </Link>
             </Text>
           </Box>

@@ -1,0 +1,175 @@
+{
+    "HomePage": {
+        "title": "Alfa Games-ке қош келдіңіз",
+        "description": "Футбол ойындарын табуға арналған ең жақсы орын"
+    },
+    "Auth": {
+        "welcome": "Қайта қош келдіңіз!",
+        "subtitle": "Ойындарды табу және жаңа ойыншылармен танысу үшін кіріңіз.",
+        "email": "Электрондық пошта",
+        "password": "Құпия сөз",
+        "forgotPassword": "Құпия сөзді ұмыттыңыз ба?",
+        "resetHere": "Осында қалпына келтіріңіз",
+        "login": "Кіру",
+        "loginWithGoogle": "Google арқылы кіру",
+        "loginWithFacebook": "Facebook арқылы кіру",
+        "noAccount": "Тіркелгіңіз жоқ па?",
+        "register": "Тіркелу",
+        "emailPlaceholder": "youremail@mail.com",
+        "passwordPlaceholder": "Құпия сөзді енгізіңіз"
+    },
+    "GamesPage": {
+        "title": "Ойын табу",
+        "searchPlaceholder": "Іздеу...",
+        "availableEvents": "Қолжетімді ойындар",
+        "eventsCount": "{count} оқиға",
+        "noEvents": "Оқиғалар табылмады",
+        "cancelEvent": "Қатысудан бас тарту",
+        "joinEvent": "Қосылу",
+        "alerts": {
+            "joinSuccess": "Сіз сәтті қосылдыңыз!",
+            "joinError": "Қосылу мүмкін болмады",
+            "cancelSuccess": "Тіркелу тоқтатылды!",
+            "cancelError": "Болдырмау мүмкін болмады"
+        },
+        "filters": {
+            "all": "Барлық түрлері",
+            "football": "Футбол",
+            "basketball": "Баскетбол",
+            "tennis": "Теннис"
+        }
+    },
+    "ProfilePage": {
+        "edit": "Өзгерту",
+        "yourStats": "Сіздің статистикаңыз",
+        "stats": {
+            "matchesPlayed": "Ойналған матчтар",
+            "football": "Футбол",
+            "volleyball": "Волейбол",
+            "tennis": "Теннис"
+        },
+        "account": "Аккаунт",
+        "resetPassword": "Құпия сөзді қалпына келтіру",
+        "faqsHelp": "Сұрақтар мен көмек",
+        "language": "Тіл",
+        "logout": "Шығу"
+    },
+    "Navigation": {
+        "games": "Ойындар",
+        "home": "Басты",
+        "myEvents": "Менің ойындарым",
+        "admin": "Админ",
+        "clubs": "Клубтар",
+        "profile": "Профиль"
+    },
+    "AdminPage": {
+        "title": "Әкімші панелі",
+        "welcome": "Қош келдіңіз, Әкімші!",
+        "description": "Сізде ойындар мен пайдаланушыларды басқаруға толық қол жетімділік бар. Әкімші функцияларына қол жеткізу үшін төмендегі сілтемелерді пайдаланыңыз.",
+        "pages": {
+            "manageGames": {
+                "title": "Ойындарды басқару",
+                "description": "Барлық ойындарды қарау, өңдеу және жою"
+            },
+            "setUserRole": {
+                "title": "Пайдаланушы рөлін орнату",
+                "description": "Пайдаланушы рөлдерін жаңарту (әкімші, ұйымдастырушы, ойыншы)"
+            },
+            "createGame": {
+                "title": "Ойын құру",
+                "description": "Жаңа ойын құру"
+            },
+            "myEvents": {
+                "title": "Менің ойындарым",
+                "description": "Тіркелген ойындарды қарау"
+            }
+        },
+        "quickLinks": {
+            "title": "Жылдам сілтемелер:",
+            "findMatch": "Ойын табу",
+            "myGames": "Менің ойындарым",
+            "profile": "Профиль"
+        }
+    },
+    "Admin": {
+        "Games": {
+            "Create": {
+                "title": "Ойын құру",
+                "cancel": "Болдырмау",
+                "submit": "Құру",
+                "checkingPermissions": "Құқықтар тексерілуде...",
+                "noPermission": "Ойын құруға құқығыңыз жоқ. Тек ұйымдастырушылар мен әкімшілер ғана ойын құра алады.",
+                "goBack": "Артқа",
+                "labels": {
+                    "title": "Ойын атауы",
+                    "description": "Сипаттама",
+                    "location": "Өтетін орны",
+                    "address": "Мекенжай",
+                    "city": "Қала",
+                    "country": "Ел",
+                    "dateTime": "Күні мен уақыты",
+                    "duration": "Ұзақтығы (мин)",
+                    "maxPlayers": "Ойыншылар саны",
+                    "price": "Бағасы",
+                    "currency": "Валюта",
+                    "skillLevel": "Деңгей",
+                    "cancellationRule": "Болдырмау ережесі",
+                    "rules": "Ережелер",
+                    "hostInfo": "Ұйымдастырушы туралы",
+                    "cancellationPolicy": "Болдырмау саясаты",
+                    "isPublic": "Көпшілікке арналған"
+                },
+                "placeholders": {
+                    "title": "мысалы, Демалыстағы футбол",
+                    "description": "Ойыныңызды сипаттаңыз...",
+                    "address": "Көше, үй",
+                    "city": "Қала",
+                    "country": "Ел",
+                    "rules": "Ойын ережелері...",
+                    "hostInfo": "Ұйымдастырушы туралы ақпарат...",
+                    "cancellationPolicy": "Болдырмау шарттары..."
+                },
+                "options": {
+                    "allLevels": "Барлық деңгей",
+                    "beginner": "Жаңадан бастаушы",
+                    "intermediate": "Әуесқой",
+                    "advanced": "Кәсіпқой",
+                    "anytime": "Кез келген уақытта",
+                    "24hours": "24 сағат бұрын",
+                    "48hours": "48 сағат бұрын",
+                    "72hours": "72 сағат бұрын",
+                    "noRefund": "Қайтарымсыз",
+                    "custom": "Басқа"
+                }
+            },
+            "Manage": {
+                "title": "Ойындарды басқару",
+                "noGames": "Ойындар табылмады",
+                "gamesFound": "{count} ойын табылды",
+                "viewDetails": "Толығырақ",
+                "edit": "Өзгерту",
+                "delete": "Жою",
+                "deleteConfirmation": "Бұл ойынды жойғыңыз келе ме?",
+                "status": {
+                    "all": "Барлығы",
+                    "upcoming": "Алдағы",
+                    "cancelled": "Болдырылмаған",
+                    "completed": "Аяқталған"
+                }
+            },
+            "MyGames": {
+                "title": "Менің ойындарым",
+                "searchPlaceholder": "Іздеу...",
+                "upcoming": "Алдағы",
+                "past": "Өткен",
+                "noUpcomingEvents": "Алдағы ойындарға тіркелмегенсіз",
+                "noPastEvents": "Өткен ойындар жоқ"
+            }
+        }
+    },
+    "Locale": {
+        "en": "Ағылшын",
+        "ru": "Орыс",
+        "kk": "Қазақ"
+    }
+}

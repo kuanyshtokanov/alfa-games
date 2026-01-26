@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Box,
@@ -28,12 +30,14 @@ import { StyledFieldLabel } from "@/components/ui/FieldLabel";
  * This is a development/testing page - you may want to restrict access in production
  */
 export default function SetRolePage() {
+  const t = useTranslations();
+  const router = useRouter();
   const { user } = useAuth();
   const [role, setRole] = useState<"player" | "host" | "admin">("admin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [navItems, setNavItems] = useState(getBottomNavItems());
+  const [navItems, setNavItems] = useState(getBottomNavItems((key) => t(`Navigation.${key}`)));
 
   // Update navigation items based on user role
   useEffect(() => {
@@ -42,6 +46,7 @@ export default function SetRolePage() {
         if (userRole) {
           setNavItems(
             getBottomNavItems(
+              (key) => t(`Navigation.${key}`),
               userRole.role,
               userRole.isClubManager || false
             )
