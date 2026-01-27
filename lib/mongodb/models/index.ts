@@ -13,3 +13,5 @@ export { default as UserCredits } from "./UserCredits";
 export type { IUserCredits } from "./UserCredits";
 export { default as CreditTransaction } from "./CreditTransaction";
 export type { ICreditTransaction } from "./CreditTransaction";
+export { default as Transaction } from "./Transaction";
+export type { ITransaction } from "./Transaction";

@@ -275,6 +275,11 @@ export default function FindMatchPage() {
             {visibleGames.map((game) => {
               const isRegistered = game.isRegistered || false;
               const actionLoading = actionLoadingGameId === game.id;
+              const reservedPlayersCount =
+                game.reservedPlayersCount ?? game.currentPlayersCount;
+              const spotsLeft =
+                Math.max(game.maxPlayers - reservedPlayersCount, 0);
+              const isFull = !isRegistered && spotsLeft <= 0;
               return (
                 <EventCard
                   key={game.id}
@@ -282,18 +287,25 @@ export default function FindMatchPage() {
                   date={formatGameDate(game.datetime)}
                   location={formatGameLocation(game.location)}
                   price={formatGamePrice(game.price, game.currency)}
-                  participants={`${game.currentPlayersCount}/${game.maxPlayers}`}
-                  onAction={() =>
-                    isRegistered
-                      ? handleCancelEvent(game.id)
-                      : router.push(`/games/${game.id}`)
-                  }
+                  participants={`${reservedPlayersCount}/${game.maxPlayers}`}
+                  onAction={() => {
+                    if (isRegistered) {
+                      handleCancelEvent(game.id);
+                      return;
+                    }
+                    if (!isFull) {
+                      router.push(`/games/${game.id}`);
+                    }
+                  }}
                   actionLabel={
                     isRegistered
                       ? t("GamesPage.cancelEvent")
-                      : t("GamesPage.joinEvent")
+                      : isFull
+                        ? t("GamesPage.full")
+                        : t("GamesPage.joinEvent")
                   }
                   actionLoading={actionLoading}
+                  actionDisabled={isFull}
                   onCardClick={() => router.push(`/games/${game.id}`)}
                 />
               );

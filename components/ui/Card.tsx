@@ -57,6 +57,7 @@ export interface EventCardProps extends BoxProps {
   onAction?: () => void;
   actionLabel?: string;
   actionLoading?: boolean;
+  actionDisabled?: boolean;
   onCardClick?: () => void;
 }
 
@@ -73,6 +74,7 @@ export function EventCard({
   onAction,
   actionLabel = "Join Event",
   actionLoading = false,
+  actionDisabled = false,
   onCardClick,
   ...props
 }: EventCardProps) {
@@ -86,6 +88,8 @@ export function EventCard({
     }
     onCardClick?.();
   };
+
+  const isActionDisabled = actionDisabled || actionLoading;
 
   return (
     <Box
@@ -194,18 +198,18 @@ export function EventCard({
         {onAction && actionLabel && (
           <Button
             onClick={onAction}
-            bg={cardColor}
-            color="#FFFFFF"
+            bg={isActionDisabled ? "#E5E7EB" : cardColor}
+            color={isActionDisabled ? "#9CA3AF" : "#FFFFFF"}
             w="full"
             py={2.5}
             borderRadius="lg"
             fontWeight="600"
             fontSize="14px"
             fontFamily="var(--font-inter), sans-serif"
-            _hover={{ opacity: 0.9 }}
-            _active={{ opacity: 0.8 }}
+            _hover={isActionDisabled ? {} : { opacity: 0.9 }}
+            _active={isActionDisabled ? {} : { opacity: 0.8 }}
             loading={actionLoading}
-            disabled={actionLoading}
+            disabled={isActionDisabled}
           >
             {actionLabel}
           </Button>
