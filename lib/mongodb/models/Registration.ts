@@ -76,6 +76,7 @@ RegistrationSchema.index({ gameId: 1, playerId: 1 }, { unique: true });
 RegistrationSchema.index({ playerId: 1, status: 1 });
 RegistrationSchema.index({ gameId: 1, status: 1 });
 RegistrationSchema.index({ paymentIntentId: 1 });
+RegistrationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Prevent re-compilation during development
 const Registration: Model<IRegistration> =

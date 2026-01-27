@@ -278,7 +278,6 @@ export default function FindMatchPage() {
               const reservedPlayersCount =
                 game.reservedPlayersCount ?? game.currentPlayersCount;
               const spotsLeft =
-                game.spotsLeft ??
                 Math.max(game.maxPlayers - reservedPlayersCount, 0);
               const isFull = !isRegistered && spotsLeft <= 0;
               return (

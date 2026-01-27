@@ -3,8 +3,7 @@ import { getAuthenticatedUser } from "@/lib/utils/api-auth";
 import connectMongoDB from "@/lib/mongodb/connect";
 import Registration from "@/lib/mongodb/models/Registration";
 import Game from "@/lib/mongodb/models/Game";
-
-const RESERVATION_TTL_MS = 5 * 60 * 1000;
+import Transaction from "@/lib/mongodb/models/Transaction";
 
 // POST /api/games/[id]/register - Register user for a game
 export async function POST(
@@ -24,7 +23,12 @@ export async function POST(
 
     await connectMongoDB();
 
-    let body: { reservationId?: string } | null = null;
+    let body: {
+      reservationId?: string;
+      transactionId?: string;
+      provider?: string;
+      widgetConfirmed?: boolean;
+    } | null = null;
     try {
       body = await request.json();
     } catch {
@@ -66,20 +70,29 @@ export async function POST(
 
     const requiresReservation = game.price > 0;
     const reservationId = body?.reservationId;
+    const transactionId = body?.transactionId;
+    const provider = body?.provider?.trim() || "tiptop-pay";
+    const widgetConfirmed = body?.widgetConfirmed === true;
     const reservationExpired =
       existingRegistration?.status === "pending" &&
       existingRegistration.expiresAt &&
       existingRegistration.expiresAt <= now;
 
     if (requiresReservation) {
-      if (
-        !existingRegistration ||
-        existingRegistration.status !== "pending" ||
-        reservationExpired
-      ) {
+      if (!existingRegistration || existingRegistration.status !== "pending") {
         return NextResponse.json(
           { error: "Please reserve your spot before paying" },
           { status: 400 }
+        );
+      }
+
+      if (reservationExpired) {
+        return NextResponse.json(
+          {
+            error: "Reservation expired. Please reserve again.",
+            code: "RESERVATION_EXPIRED",
+          },
+          { status: 409 }
         );
       }
 
@@ -88,7 +101,17 @@ export async function POST(
         existingRegistration._id.toString() !== reservationId
       ) {
         return NextResponse.json(
-          { error: "Reservation mismatch. Please try again." },
+          {
+            error: "Reservation mismatch. Please try again.",
+            code: "RESERVATION_MISMATCH",
+          },
+          { status: 400 }
+        );
+      }
+
+      if (!transactionId && !widgetConfirmed) {
+        return NextResponse.json(
+          { error: "Missing payment confirmation.", code: "MISSING_PAYMENT" },
           { status: 400 }
         );
       }
@@ -108,13 +131,51 @@ export async function POST(
 
       if (!hasActiveReservation && reservedCount >= game.maxPlayers) {
         return NextResponse.json(
-          { error: "Game is full" },
+          { error: "Game is full", code: "GAME_FULL" },
           { status: 400 }
         );
       }
     }
 
     const paymentStatus = game.price > 0 ? "paid" : "pending";
+    const currency = (game.currency || "KZT").toUpperCase();
+
+    if (game.price > 0 && transactionId && existingRegistration) {
+      try {
+        await Transaction.create({
+          registrationId: existingRegistration._id,
+          gameId: game._id,
+          userId: user._id,
+          provider,
+          transactionId,
+          amount: game.price,
+          currency,
+          status: "paid",
+        });
+      } catch (error: any) {
+        if (error?.code === 11000) {
+          const existingTransaction = await Transaction.findOne({
+            provider,
+            transactionId,
+          });
+          if (
+            existingTransaction &&
+            existingTransaction.registrationId.toString() !==
+              existingRegistration._id.toString()
+          ) {
+            return NextResponse.json(
+              {
+                error: "Payment already used for another reservation.",
+                code: "TRANSACTION_CONFLICT",
+              },
+              { status: 409 }
+            );
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
 
     if (existingRegistration) {
       existingRegistration.status = "confirmed";
