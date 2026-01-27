@@ -7,7 +7,8 @@ export interface IRegistration extends Document {
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   paymentMethod: "credits" | "stripe" | "mixed"; // How payment was made
   creditsUsed?: number; // Amount of credits used (if any)
-  status: "confirmed" | "cancelled";
+  status: "pending" | "confirmed" | "cancelled";
+  expiresAt?: Date;
   registeredAt: Date;
   cancelledAt?: Date;
 }
@@ -49,8 +50,12 @@ const RegistrationSchema: Schema = new Schema(
     },
     status: {
       type: String,
-      enum: ["confirmed", "cancelled"],
+      enum: ["pending", "confirmed", "cancelled"],
       default: "confirmed",
+      index: true,
+    },
+    expiresAt: {
+      type: Date,
       index: true,
     },
     registeredAt: {

@@ -92,6 +92,49 @@ export async function GET(request: NextRequest) {
       .skip(skip)
       .lean();
 
+    const now = new Date();
+    const gameIds = games.map((game) => game._id);
+    const reservationCountsByGame: Map<
+      string,
+      { confirmed: number; pending: number }
+    > = new Map();
+
+    if (gameIds.length > 0) {
+      const reservationCounts = await Registration.aggregate([
+        {
+          $match: {
+            gameId: { $in: gameIds },
+            $or: [
+              { status: "confirmed" },
+              { status: "pending", expiresAt: { $gt: now } },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: "$gameId",
+            confirmed: {
+              $sum: {
+                $cond: [{ $eq: ["$status", "confirmed"] }, 1, 0],
+              },
+            },
+            pending: {
+              $sum: {
+                $cond: [{ $eq: ["$status", "pending"] }, 1, 0],
+              },
+            },
+          },
+        },
+      ]);
+
+      reservationCounts.forEach((entry) => {
+        reservationCountsByGame.set(entry._id.toString(), {
+          confirmed: entry.confirmed || 0,
+          pending: entry.pending || 0,
+        });
+      });
+    }
+
     // Get user's registrations if authenticated
     let userRegistrations: Map<string, boolean> = new Map();
     if (user) {
@@ -108,37 +151,53 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        games: games.map((game) => ({
-          id: game._id.toString(),
-          hostId: game.hostId,
-          title: game.title,
-          description: game.description,
-          location: game.location,
-          datetime: game.datetime instanceof Date 
-            ? game.datetime.toISOString() 
-            : game.datetime,
-          duration: game.duration,
-          maxPlayers: game.maxPlayers,
-          currentPlayersCount: game.currentPlayersCount,
-          price: game.price,
-          currency: game.currency,
-          skillLevel: game.skillLevel,
-          equipment: game.equipment,
-          rules: game.rules,
-          hostInfo: game.hostInfo,
-          cancellationPolicy: game.cancellationPolicy,
-          cancellationRule: game.cancellationRule,
-          isPublic: game.isPublic,
-          clubId: game.clubId,
-          status: game.status,
-          isRegistered: user ? userRegistrations.has(game._id.toString()) : false,
-          createdAt: game.createdAt instanceof Date 
-            ? game.createdAt.toISOString() 
-            : game.createdAt,
-          updatedAt: game.updatedAt instanceof Date 
-            ? game.updatedAt.toISOString() 
-            : game.updatedAt,
-        })),
+        games: games.map((game) => {
+          const counts = reservationCountsByGame.get(game._id.toString()) || {
+            confirmed: 0,
+            pending: 0,
+          };
+          const reservedPlayersCount = counts.confirmed + counts.pending;
+          const spotsLeft = Math.max(game.maxPlayers - reservedPlayersCount, 0);
+
+          return {
+            id: game._id.toString(),
+            hostId: game.hostId,
+            title: game.title,
+            description: game.description,
+            location: game.location,
+            datetime:
+              game.datetime instanceof Date
+                ? game.datetime.toISOString()
+                : game.datetime,
+            duration: game.duration,
+            maxPlayers: game.maxPlayers,
+            currentPlayersCount: game.currentPlayersCount,
+            reservedPlayersCount,
+            spotsLeft,
+            price: game.price,
+            currency: game.currency,
+            skillLevel: game.skillLevel,
+            equipment: game.equipment,
+            rules: game.rules,
+            hostInfo: game.hostInfo,
+            cancellationPolicy: game.cancellationPolicy,
+            cancellationRule: game.cancellationRule,
+            isPublic: game.isPublic,
+            clubId: game.clubId,
+            status: game.status,
+            isRegistered: user
+              ? userRegistrations.has(game._id.toString())
+              : false,
+            createdAt:
+              game.createdAt instanceof Date
+                ? game.createdAt.toISOString()
+                : game.createdAt,
+            updatedAt:
+              game.updatedAt instanceof Date
+                ? game.updatedAt.toISOString()
+                : game.updatedAt,
+          };
+        }),
       },
       { status: 200 }
     );

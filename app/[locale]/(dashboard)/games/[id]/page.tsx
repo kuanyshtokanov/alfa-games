@@ -28,6 +28,8 @@ interface Player {
   name: string;
   email: string;
   avatar?: string;
+  status?: "pending" | "confirmed";
+  expiresAt?: string | null;
 }
 
 type CloudPaymentsWidget = {
@@ -164,9 +166,31 @@ export default function GameDetailPage() {
 
     try {
       setActionLoading(true);
+      const token = await user.getIdToken();
+      let reservationId: string | null = null;
 
       // TipTopPay Widget Integration
       if (game.price > 0) {
+        const reserveResponse = await fetch(`/api/games/${gameId}/reserve`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const reserveData = await reserveResponse.json();
+
+        if (!reserveResponse.ok) {
+          toaster.create({
+            title: "Spot unavailable",
+            description: reserveData.error || "Please try again.",
+            type: "error",
+          });
+          return;
+        }
+
+        reservationId = reserveData.reservationId;
+
         // Wrap widget payment in a promise
         await new Promise<void>((resolve, reject) => {
           if (!window.cp?.CloudPayments) {
@@ -203,13 +227,13 @@ export default function GameDetailPage() {
           );
         });
       }
-
-      const token = await user.getIdToken();
       const response = await fetch(`/api/games/${gameId}/register`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          ...(reservationId ? { "Content-Type": "application/json" } : {}),
         },
+        body: reservationId ? JSON.stringify({ reservationId }) : undefined,
       });
 
       const data = await response.json();
@@ -234,6 +258,7 @@ export default function GameDetailPage() {
             name: displayName,
             email: user.email || "",
             avatar: user.photoURL || undefined,
+            status: "confirmed",
           },
           ...prev,
         ];
@@ -349,7 +374,12 @@ export default function GameDetailPage() {
     );
   }
 
-  const spotsLeft = game.maxPlayers - game.currentPlayersCount;
+  const pendingPlayers = players.filter((player) => player.status === "pending");
+  const confirmedPlayers = players.filter(
+    (player) => player.status !== "pending"
+  );
+  const reservedCount = confirmedPlayers.length + pendingPlayers.length;
+  const spotsLeft = Math.max(game.maxPlayers - reservedCount, 0);
   const hostInfo = game.hostId as { name?: string; avatar?: string } | string;
   const hostName =
     typeof hostInfo === "object"
@@ -540,7 +570,7 @@ export default function GameDetailPage() {
                 color="#9CA3AF"
                 fontFamily="var(--font-inter), sans-serif"
               >
-                {game.currentPlayersCount}/{game.maxPlayers}
+                {reservedCount}/{game.maxPlayers}
               </Text>
             </HStack>
 
@@ -558,6 +588,17 @@ export default function GameDetailPage() {
                   >
                     {player.name.split(" ")[0]}
                   </Text>
+                  {player.status === "pending" && (
+                    <Text
+                      fontSize="10px"
+                      fontWeight="500"
+                      color="#9CA3AF"
+                      fontFamily="var(--font-inter), sans-serif"
+                      textAlign="center"
+                    >
+                      Pending payment
+                    </Text>
+                  )}
                 </VStack>
               ))}
               {/* Open spots */}

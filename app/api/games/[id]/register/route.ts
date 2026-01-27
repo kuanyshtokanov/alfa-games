@@ -4,6 +4,8 @@ import connectMongoDB from "@/lib/mongodb/connect";
 import Registration from "@/lib/mongodb/models/Registration";
 import Game from "@/lib/mongodb/models/Game";
 
+const RESERVATION_TTL_MS = 5 * 60 * 1000;
+
 // POST /api/games/[id]/register - Register user for a game
 export async function POST(
   request: NextRequest,
@@ -22,20 +24,19 @@ export async function POST(
 
     await connectMongoDB();
 
+    let body: { reservationId?: string } | null = null;
+    try {
+      body = await request.json();
+    } catch {
+      body = null;
+    }
+
     // Check if game exists
     const game = await Game.findById(id);
     if (!game) {
       return NextResponse.json(
         { error: "Game not found" },
         { status: 404 }
-      );
-    }
-
-    // Check if game is full
-    if (game.currentPlayersCount >= game.maxPlayers) {
-      return NextResponse.json(
-        { error: "Game is full" },
-        { status: 400 }
       );
     }
 
@@ -61,9 +62,65 @@ export async function POST(
           { status: 400 }
         );
       }
-      // If cancelled, reactivate it
+    }
+
+    const requiresReservation = game.price > 0;
+    const reservationId = body?.reservationId;
+    const reservationExpired =
+      existingRegistration?.status === "pending" &&
+      existingRegistration.expiresAt &&
+      existingRegistration.expiresAt <= now;
+
+    if (requiresReservation) {
+      if (
+        !existingRegistration ||
+        existingRegistration.status !== "pending" ||
+        reservationExpired
+      ) {
+        return NextResponse.json(
+          { error: "Please reserve your spot before paying" },
+          { status: 400 }
+        );
+      }
+
+      if (
+        reservationId &&
+        existingRegistration._id.toString() !== reservationId
+      ) {
+        return NextResponse.json(
+          { error: "Reservation mismatch. Please try again." },
+          { status: 400 }
+        );
+      }
+    } else {
+      const pendingCount = await Registration.countDocuments({
+        gameId: game._id,
+        status: "pending",
+        expiresAt: { $gt: now },
+      });
+      const confirmedCount = await Registration.countDocuments({
+        gameId: game._id,
+        status: "confirmed",
+      });
+      const reservedCount = pendingCount + confirmedCount;
+      const hasActiveReservation =
+        existingRegistration?.status === "pending" && !reservationExpired;
+
+      if (!hasActiveReservation && reservedCount >= game.maxPlayers) {
+        return NextResponse.json(
+          { error: "Game is full" },
+          { status: 400 }
+        );
+      }
+    }
+
+    const paymentStatus = game.price > 0 ? "paid" : "pending";
+
+    if (existingRegistration) {
       existingRegistration.status = "confirmed";
       existingRegistration.cancelledAt = undefined;
+      existingRegistration.expiresAt = undefined;
+      existingRegistration.paymentStatus = paymentStatus;
       await existingRegistration.save();
     } else {
       // Create new registration
@@ -71,7 +128,7 @@ export async function POST(
         gameId: game._id,
         playerId: user._id,
         status: "confirmed",
-        paymentStatus: "pending", // TODO: Handle payment
+        paymentStatus,
       });
     }
 

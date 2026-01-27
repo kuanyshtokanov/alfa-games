@@ -26,6 +26,7 @@
         "noEvents": "No events found",
         "cancelEvent": "Cancel Event",
         "joinEvent": "Join Event",
+        "full": "Full",
         "alerts": {
             "joinSuccess": "Successfully joined event!",
             "joinError": "Failed to join event",
