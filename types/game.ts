@@ -51,6 +51,8 @@ export interface Game {
   duration: number;
   maxPlayers: number;
   currentPlayersCount: number;
+  reservedPlayersCount?: number;
+  spotsLeft?: number;
   price: number;
   currency: string;
   skillLevel: "beginner" | "intermediate" | "advanced" | "all";

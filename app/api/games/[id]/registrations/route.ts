@@ -28,10 +28,14 @@ export async function GET(
       );
     }
 
-    // Get all confirmed registrations for this game
+    const now = new Date();
+    // Get all confirmed + active pending registrations for this game
     const registrations = await Registration.find({
       gameId: game._id,
-      status: "confirmed",
+      $or: [
+        { status: "confirmed" },
+        { status: "pending", expiresAt: { $gt: now } },
+      ],
     })
       .populate("playerId", "name email avatar")
       .lean();
@@ -44,16 +48,28 @@ export async function GET(
         name: player.name || "Unknown",
         email: player.email || "",
         avatar: player.avatar || undefined,
+        status: reg.status,
+        expiresAt: reg.expiresAt ? new Date(reg.expiresAt).toISOString() : null,
       };
     });
+    const confirmedCount = registrations.filter(
+      (reg) => reg.status === "confirmed"
+    ).length;
+    const pendingCount = registrations.filter(
+      (reg) => reg.status === "pending"
+    ).length;
+    const reservedCount = confirmedCount + pendingCount;
+    const spotsLeft = Math.max(game.maxPlayers - reservedCount, 0);
 
     return NextResponse.json(
       {
         success: true,
         players,
-        totalPlayers: players.length,
+        totalPlayers: reservedCount,
+        confirmedCount,
+        pendingCount,
         maxPlayers: game.maxPlayers,
-        spotsLeft: game.maxPlayers - players.length,
+        spotsLeft,
       },
       { status: 200 }
     );

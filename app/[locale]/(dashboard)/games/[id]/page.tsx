@@ -28,6 +28,8 @@ interface Player {
   name: string;
   email: string;
   avatar?: string;
+  status?: "pending" | "confirmed";
+  expiresAt?: string | null;
 }
 
 type CloudPaymentsWidget = {
@@ -40,15 +42,24 @@ type CloudPaymentsWidget = {
       currency?: string;
       accountId?: string | null;
       skin?: string;
+      externalId?: string;
       data?: Record<string, unknown>;
       paymentMethodSequence?: string[];
       restrictedPaymentMethods?: string[];
       tokenize?: boolean;
     },
     callbacks: {
-      onSuccess: () => void;
+      onSuccess: (result?: {
+        transactionId?: string | number;
+        paymentId?: string | number;
+        id?: string | number;
+      }) => void;
       onFail: (reason: string) => void;
-    }
+      onComplete: (result: {
+        message: string | null;
+        success: boolean;
+      }) => void;
+    },
   ) => void;
 };
 
@@ -109,15 +120,14 @@ export default function GameDetailPage() {
           const regData = await regResponse.json();
           setPlayers(regData.players || []);
         }
-      } catch (error) {
-        console.error("Error fetching game data:", error);
+      } catch {
       } finally {
         if (showLoader) {
           setLoading(false);
         }
       }
     },
-    [user, gameId]
+    [user, gameId],
   );
 
   useEffect(() => {
@@ -162,14 +172,57 @@ export default function GameDetailPage() {
   const handleJoin = useCallback(async () => {
     if (!user || !game) return;
 
+    let reservationId: string | null = null;
+    let transactionId: string | null = null;
+    let widgetConfirmed = false;
+    let releaseReservation = async () => {};
+
     try {
       setActionLoading(true);
+      const token = await user.getIdToken();
 
       // TipTopPay Widget Integration
       if (game.price > 0) {
+        const reserveResponse = await fetch(`/api/games/${gameId}/reserve`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const reserveData = await reserveResponse.json();
+
+        if (!reserveResponse.ok) {
+          toaster.create({
+            title: "Spot unavailable",
+            description: reserveData.error || "Please try again.",
+            type: "error",
+          });
+          return;
+        }
+
+        reservationId = reserveData.reservationId;
+        releaseReservation = async () => {
+          if (!reservationId) return;
+          try {
+            await fetch(`/api/games/${gameId}/reserve/cancel`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ reservationId }),
+            });
+          } catch {
+            // best-effort release; reservation will expire on TTL
+          }
+        };
+
         // Wrap widget payment in a promise
         await new Promise<void>((resolve, reject) => {
+          let settled = false;
           if (!window.cp?.CloudPayments) {
+            settled = true;
             reject(new Error("Payment widget not loaded"));
             return;
           }
@@ -183,33 +236,67 @@ export default function GameDetailPage() {
               currency: game.currency || "KZT",
               accountId: user.email,
               skin: "mini",
+              externalId: reservationId ?? undefined,
               data: {
                 gameId: gameId,
                 userId: user.uid,
               },
-              paymentMethodSequence: [
-                "Card", "GooglePay", "ApplePay"
-              ],
+              paymentMethodSequence: ["Card", "GooglePay", "ApplePay"],
               tokenize: true,
             },
             {
-              onSuccess: () => {
+              onSuccess: (result) => {
+                if (settled) return;
+                settled = true;
+                widgetConfirmed = true;
+                const resolvedId =
+                  result?.transactionId ?? result?.paymentId ?? result?.id;
+                if (resolvedId) {
+                  transactionId = String(resolvedId);
+                }
                 resolve();
               },
               onFail: (reason: string) => {
+                if (settled) return;
+                settled = true;
                 reject(new Error(`Payment failed: ${reason}`));
               },
-            }
+              onComplete: (result) => {
+                if (!result.success) {
+                  void releaseReservation();
+                  if (!settled) {
+                    settled = true;
+                    reject(new Error("Payment not completed"));
+                  }
+                }
+              },
+            },
           );
         });
       }
+      if (game.price > 0 && !widgetConfirmed) {
+        toaster.create({
+          title: "Payment not confirmed",
+          description: "Payment did not complete. Please try again.",
+          type: "error",
+        });
+        return;
+      }
 
-      const token = await user.getIdToken();
       const response = await fetch(`/api/games/${gameId}/register`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          ...(reservationId ? { "Content-Type": "application/json" } : {}),
         },
+        body: reservationId
+          ? JSON.stringify({
+              reservationId,
+              transactionId: transactionId ?? undefined,
+              provider: "tiptop-pay",
+              widgetConfirmed,
+            })
+          : undefined,
       });
 
       const data = await response.json();
@@ -226,16 +313,17 @@ export default function GameDetailPage() {
       setIsRegistered(true);
       updatePlayerCount(1);
       setPlayers((prev) => {
-        if (prev.some((player) => player.id === user.uid)) return prev;
         const displayName = user.displayName || user.email || "You";
+        const nextPlayers = prev.filter((player) => player.id !== user.uid);
         return [
           {
             id: user.uid,
             name: displayName,
             email: user.email || "",
             avatar: user.photoURL || undefined,
+            status: "confirmed",
           },
-          ...prev,
+          ...nextPlayers,
         ];
       });
 
@@ -248,12 +336,16 @@ export default function GameDetailPage() {
       // Refresh data without full-page loader
       void fetchGameData({ showLoader: false });
     } catch (error) {
-      console.error("Error joining event:", error);
+      const message =
+        error instanceof Error ? error.message : "Please try again.";
       toaster.create({
         title: "Payment or join failed",
-        description: "Please try again.",
+        description: message,
         type: "error",
       });
+      if (reservationId) {
+        void releaseReservation();
+      }
     } finally {
       setActionLoading(false);
     }
@@ -295,8 +387,7 @@ export default function GameDetailPage() {
 
       // Refresh data without full-page loader
       void fetchGameData({ showLoader: false });
-    } catch (error) {
-      console.error("Error cancelling event:", error);
+    } catch {
       toaster.create({
         title: "Cancel failed",
         description: "Please try again.",
@@ -349,7 +440,15 @@ export default function GameDetailPage() {
     );
   }
 
-  const spotsLeft = game.maxPlayers - game.currentPlayersCount;
+  const confirmedPlayers = players.filter(
+    (player) => player.status !== "pending",
+  );
+  const confirmedCount = confirmedPlayers.length;
+  const pendingCount = players.filter(
+    (player) => player.status === "pending",
+  ).length;
+  const reservedCount = confirmedPlayers.length + pendingCount;
+  const spotsLeft = Math.max(game.maxPlayers - reservedCount, 0);
   const hostInfo = game.hostId as { name?: string; avatar?: string } | string;
   const hostName =
     typeof hostInfo === "object"
@@ -368,19 +467,19 @@ export default function GameDetailPage() {
 
   const dateDisplay = isToday
     ? `Today, ${gameDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })} | ${gameDate.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`
+        month: "short",
+        day: "numeric",
+      })} | ${gameDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
     : `${gameDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })} | ${gameDate.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
+        month: "short",
+        day: "numeric",
+      })} | ${gameDate.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
 
   return (
     <Box
@@ -525,7 +624,7 @@ export default function GameDetailPage() {
 
           {/* Players Section */}
           <VStack align="stretch" gap={4} mb={6}>
-            <HStack justify="space-between">
+            <HStack justify="space-between" align="flex-start">
               <Heading
                 fontSize="18px"
                 fontWeight="700"
@@ -540,13 +639,13 @@ export default function GameDetailPage() {
                 color="#9CA3AF"
                 fontFamily="var(--font-inter), sans-serif"
               >
-                {game.currentPlayersCount}/{game.maxPlayers}
+                {confirmedCount}/{game.maxPlayers}
               </Text>
             </HStack>
 
             {/* Players Grid */}
             <SimpleGrid columns={4} gap={4}>
-              {players.map((player) => (
+              {confirmedPlayers.map((player) => (
                 <VStack key={player.id} gap={1}>
                   <Avatar name={player.name} src={player.avatar} size="md" />
                   <Text
