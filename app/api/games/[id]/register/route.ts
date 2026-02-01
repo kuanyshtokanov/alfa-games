@@ -140,14 +140,20 @@ export async function POST(
     const paymentStatus = game.price > 0 ? "paid" : "pending";
     const currency = (game.currency || "KZT").toUpperCase();
 
-    if (game.price > 0 && transactionId && existingRegistration) {
+    const effectiveTransactionId =
+      transactionId ??
+      (widgetConfirmed && existingRegistration
+        ? `widget-confirmed:${existingRegistration._id.toString()}`
+        : null);
+
+    if (game.price > 0 && effectiveTransactionId && existingRegistration) {
       try {
         await Transaction.create({
           registrationId: existingRegistration._id,
           gameId: game._id,
           userId: user._id,
           provider,
-          transactionId,
+          transactionId: effectiveTransactionId,
           amount: game.price,
           currency,
           status: "paid",
@@ -156,7 +162,7 @@ export async function POST(
         if (error?.code === 11000) {
           const existingTransaction = await Transaction.findOne({
             provider,
-            transactionId,
+            transactionId: effectiveTransactionId,
           });
           if (
             existingTransaction &&

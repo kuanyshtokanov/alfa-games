@@ -220,7 +220,9 @@ export default function GameDetailPage() {
 
         // Wrap widget payment in a promise
         await new Promise<void>((resolve, reject) => {
+          let settled = false;
           if (!window.cp?.CloudPayments) {
+            settled = true;
             reject(new Error("Payment widget not loaded"));
             return;
           }
@@ -244,6 +246,8 @@ export default function GameDetailPage() {
             },
             {
               onSuccess: (result) => {
+                if (settled) return;
+                settled = true;
                 widgetConfirmed = true;
                 const resolvedId =
                   result?.transactionId ?? result?.paymentId ?? result?.id;
@@ -253,11 +257,17 @@ export default function GameDetailPage() {
                 resolve();
               },
               onFail: (reason: string) => {
+                if (settled) return;
+                settled = true;
                 reject(new Error(`Payment failed: ${reason}`));
               },
               onComplete: (result) => {
                 if (!result.success) {
                   void releaseReservation();
+                  if (!settled) {
+                    settled = true;
+                    reject(new Error("Payment not completed"));
+                  }
                 }
               },
             },
@@ -433,6 +443,7 @@ export default function GameDetailPage() {
   const confirmedPlayers = players.filter(
     (player) => player.status !== "pending",
   );
+  const confirmedCount = confirmedPlayers.length;
   const pendingCount = players.filter(
     (player) => player.status === "pending",
   ).length;
@@ -628,7 +639,7 @@ export default function GameDetailPage() {
                 color="#9CA3AF"
                 fontFamily="var(--font-inter), sans-serif"
               >
-                {reservedCount}/{game.maxPlayers}
+                {confirmedCount}/{game.maxPlayers}
               </Text>
             </HStack>
 
