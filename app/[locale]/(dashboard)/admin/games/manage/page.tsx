@@ -245,7 +245,7 @@ export default function ManageGamesPage() {
                   <HStack gap={2} mt={2} justify="flex-end">
                     <SecondaryButton
                       size="sm"
-                      onClick={() => router.push(`/games/${game.id}`)}
+                      onClick={() => router.push(`/admin/games/${game.id}`)}
                     >
                       {t("Admin.Games.Manage.edit")}
                     </SecondaryButton>

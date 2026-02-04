@@ -4,6 +4,7 @@ import connectMongoDB from "@/lib/mongodb/connect";
 import Registration from "@/lib/mongodb/models/Registration";
 import Game from "@/lib/mongodb/models/Game";
 import Transaction from "@/lib/mongodb/models/Transaction";
+import { applyCreditsForRegistration, CreditsError } from "@/lib/utils/credits";
 
 // POST /api/games/[id]/register - Register user for a game
 export async function POST(
@@ -28,6 +29,8 @@ export async function POST(
       transactionId?: string;
       provider?: string;
       widgetConfirmed?: boolean;
+      useCredits?: boolean;
+      paymentMethod?: string;
     } | null = null;
     try {
       body = await request.json();
@@ -73,6 +76,9 @@ export async function POST(
     const transactionId = body?.transactionId;
     const provider = body?.provider?.trim() || "tiptop-pay";
     const widgetConfirmed = body?.widgetConfirmed === true;
+    const useCredits =
+      game.price > 0 &&
+      (body?.useCredits === true || body?.paymentMethod === "credits");
     const reservationExpired =
       existingRegistration?.status === "pending" &&
       existingRegistration.expiresAt &&
@@ -109,7 +115,7 @@ export async function POST(
         );
       }
 
-      if (!transactionId && !widgetConfirmed) {
+      if (!useCredits && !transactionId && !widgetConfirmed) {
         return NextResponse.json(
           { error: "Missing payment confirmation.", code: "MISSING_PAYMENT" },
           { status: 400 }
@@ -146,7 +152,12 @@ export async function POST(
         ? `widget-confirmed:${existingRegistration._id.toString()}`
         : null);
 
-    if (game.price > 0 && effectiveTransactionId && existingRegistration) {
+    if (
+      game.price > 0 &&
+      effectiveTransactionId &&
+      existingRegistration &&
+      !useCredits
+    ) {
       try {
         await Transaction.create({
           registrationId: existingRegistration._id,
@@ -158,8 +169,9 @@ export async function POST(
           currency,
           status: "paid",
         });
-      } catch (error: any) {
-        if (error?.code === 11000) {
+      } catch (error: unknown) {
+        const err = error as { code?: number } | null;
+        if (err?.code === 11000) {
           const existingTransaction = await Transaction.findOne({
             provider,
             transactionId: effectiveTransactionId,
@@ -183,11 +195,59 @@ export async function POST(
       }
     }
 
+    let creditTransactionId: string | null = null;
+    if (game.price > 0 && useCredits && existingRegistration) {
+      if (transactionId || widgetConfirmed) {
+        return NextResponse.json(
+          {
+            error: "Credits payment should not include external confirmation.",
+            code: "CREDITS_PAYMENT_CONFLICT",
+          },
+          { status: 400 }
+        );
+      }
+
+      try {
+        const creditResult = await applyCreditsForRegistration({
+          userId: user._id,
+          registrationId: existingRegistration._id,
+          gameId: game._id,
+          amount: game.price,
+          currency,
+        });
+
+        creditTransactionId = creditResult.creditTransactionId;
+
+        await Transaction.create({
+          registrationId: existingRegistration._id,
+          gameId: game._id,
+          userId: user._id,
+          provider: "credits",
+          transactionId: creditTransactionId,
+          amount: game.price,
+          currency,
+          status: "paid",
+        });
+      } catch (error: unknown) {
+        if (error instanceof CreditsError) {
+          return NextResponse.json(
+            { error: error.message, code: error.code },
+            { status: error.status }
+          );
+        }
+        throw error;
+      }
+    }
+
     if (existingRegistration) {
       existingRegistration.status = "confirmed";
       existingRegistration.cancelledAt = undefined;
       existingRegistration.expiresAt = undefined;
       existingRegistration.paymentStatus = paymentStatus;
+      if (game.price > 0) {
+        existingRegistration.paymentMethod = useCredits ? "credits" : "stripe";
+        existingRegistration.creditsUsed = useCredits ? game.price : 0;
+      }
       await existingRegistration.save();
     } else {
       // Create new registration
@@ -196,6 +256,8 @@ export async function POST(
         playerId: user._id,
         status: "confirmed",
         paymentStatus,
+        paymentMethod: game.price > 0 ? "stripe" : undefined,
+        creditsUsed: 0,
       });
     }
 
@@ -210,10 +272,11 @@ export async function POST(
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error registering for game:", error);
+    const err = error as { message?: string } | null;
     return NextResponse.json(
-      { error: "Internal server error", message: error.message },
+      { error: "Internal server error", message: err?.message },
       { status: 500 }
     );
   }

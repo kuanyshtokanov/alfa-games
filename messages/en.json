@@ -72,6 +72,10 @@
                 "title": "Manage Games",
                 "description": "View, edit, and delete all games"
             },
+            "manageUsers": {
+                "title": "Manage Users",
+                "description": "Top up player credits and review accounts"
+            },
             "setUserRole": {
                 "title": "Set User Role",
                 "description": "Update user roles (admin, host, player)"

@@ -97,6 +97,12 @@ export default function AdminDashboard() {
       icon: "🎮",
     },
     {
+      title: t("AdminPage.pages.manageUsers.title"),
+      description: t("AdminPage.pages.manageUsers.description"),
+      href: "/admin/users",
+      icon: "💳",
+    },
+    {
       title: t("AdminPage.pages.setUserRole.title"),
       description: t("AdminPage.pages.setUserRole.description"),
       href: "/admin/set-role",
