@@ -3,6 +3,11 @@ import { getAuthenticatedUser } from "@/lib/utils/api-auth";
 import connectMongoDB from "@/lib/mongodb/connect";
 import Registration from "@/lib/mongodb/models/Registration";
 import Game from "@/lib/mongodb/models/Game";
+import Transaction from "@/lib/mongodb/models/Transaction";
+import {
+  refundCreditsForCancellation,
+  CreditsError,
+} from "@/lib/utils/credits";
 
 // POST /api/games/[id]/cancel - Cancel user's registration for a game
 export async function POST(
@@ -45,6 +50,43 @@ export async function POST(
       );
     }
 
+    let refundTransactionId: string | null = null;
+    if (game.price > 0 && registration.paymentStatus === "paid") {
+      try {
+        const currency = (game.currency || "KZT").toUpperCase();
+        const refundResult = await refundCreditsForCancellation({
+          userId: user._id,
+          registrationId: registration._id,
+          gameId: game._id,
+          amount: game.price,
+          currency,
+        });
+
+        refundTransactionId = refundResult.creditTransactionId;
+
+        await Transaction.create({
+          registrationId: registration._id,
+          gameId: game._id,
+          userId: user._id,
+          provider: "credits",
+          transactionId: refundTransactionId,
+          amount: game.price,
+          currency,
+          status: "refunded",
+        });
+
+        registration.paymentStatus = "refunded";
+      } catch (error: unknown) {
+        if (error instanceof CreditsError) {
+          return NextResponse.json(
+            { error: error.message, code: error.code },
+            { status: error.status }
+          );
+        }
+        throw error;
+      }
+    }
+
     // Cancel the registration
     registration.status = "cancelled";
     registration.cancelledAt = new Date();
@@ -60,6 +102,7 @@ export async function POST(
       {
         success: true,
         message: "Successfully cancelled registration for the game",
+        refundTransactionId,
       },
       { status: 200 }
     );

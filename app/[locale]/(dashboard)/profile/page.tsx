@@ -42,6 +42,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [creditsBalance, setCreditsBalance] = useState<number | null>(null);
+  const [creditsCurrency, setCreditsCurrency] = useState<string>("KZT");
   const [stats, setStats] = useState<UserStats>({
     matchesPlayed: 0,
     football: 0,
@@ -85,8 +87,23 @@ export default function ProfilePage() {
             setStats(statsData.stats);
           }
         }
+
+        const creditsResponse = await fetch("/api/credits/balance", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (creditsResponse.ok) {
+          const creditsData = await creditsResponse.json();
+          setCreditsBalance(Number(creditsData.balance ?? 0));
+          setCreditsCurrency(String(creditsData.currency || "KZT"));
+        } else {
+          setCreditsBalance(null);
+        }
       } catch (error) {
         console.error("Error fetching profile data:", error);
+        setCreditsBalance(null);
       } finally {
         setLoading(false);
       }
@@ -168,6 +185,30 @@ export default function ProfilePage() {
             </SecondaryButton>
           </HStack>
         </Card>
+
+        {creditsBalance !== null && (
+          <Card mb={6}>
+            <HStack justify="space-between" align="center">
+              <VStack align="flex-start" gap={1}>
+                <Text
+                  fontSize="14px"
+                  color="gray.600"
+                  fontFamily="var(--font-inter), sans-serif"
+                >
+                  Credits balance
+                </Text>
+                <Text
+                  fontSize="20px"
+                  fontWeight="700"
+                  color="gray.900"
+                  fontFamily="var(--font-inter), sans-serif"
+                >
+                  {creditsBalance} {creditsCurrency}
+                </Text>
+              </VStack>
+            </HStack>
+          </Card>
+        )}
 
         {/* Your Stats Section */}
         <VStack align="stretch" gap={4} mb={6}>

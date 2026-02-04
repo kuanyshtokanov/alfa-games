@@ -14,11 +14,13 @@ import {
   IconButton,
   SimpleGrid,
   Button,
+  Checkbox,
 } from "@chakra-ui/react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Button";
 import { formatGameLocation, formatGamePrice } from "@/lib/utils/game";
+import { canUserManageGame, getCurrentUserRole } from "@/lib/utils/rbac-client";
 import { HiLocationMarker, HiClock, HiShare } from "react-icons/hi";
 import type { Game } from "@/types/game";
 import { toaster } from "@/components/ui/toaster";
@@ -80,6 +82,10 @@ export default function GameDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [creditsBalance, setCreditsBalance] = useState<number | null>(null);
+  const [creditsCurrency, setCreditsCurrency] = useState<string>("KZT");
+  const [useCredits, setUseCredits] = useState(false);
+  const [canManage, setCanManage] = useState(false);
 
   const gameId = params.id as string;
 
@@ -120,7 +126,22 @@ export default function GameDetailPage() {
           const regData = await regResponse.json();
           setPlayers(regData.players || []);
         }
+
+        const creditsResponse = await fetch("/api/credits/balance", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (creditsResponse.ok) {
+          const creditsData = await creditsResponse.json();
+          setCreditsBalance(Number(creditsData.balance ?? 0));
+          setCreditsCurrency(String(creditsData.currency || "KZT"));
+        } else {
+          setCreditsBalance(null);
+        }
       } catch {
+        setCreditsBalance(null);
       } finally {
         if (showLoader) {
           setLoading(false);
@@ -149,6 +170,33 @@ export default function GameDetailPage() {
   }, [user, gameId, fetchGameData]);
 
   useEffect(() => {
+    if (!user || !game) {
+      setCanManage(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const checkManagePermission = async () => {
+      try {
+        const role = await getCurrentUserRole(user);
+        if (cancelled) return;
+        setCanManage(canUserManageGame(role, game.hostId));
+      } catch {
+        if (!cancelled) {
+          setCanManage(false);
+        }
+      }
+    };
+
+    checkManagePermission();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, game]);
+
+  useEffect(() => {
     if (!user || !gameId) return;
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -160,6 +208,20 @@ export default function GameDetailPage() {
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [user, gameId, fetchGameData]);
+
+  useEffect(() => {
+    if (!game || game.price <= 0) {
+      setUseCredits(false);
+      return;
+    }
+    const gameCurrency = (game.currency || "KZT").toUpperCase();
+    const creditsCurrencyNormalized = (creditsCurrency || "KZT").toUpperCase();
+    const hasCurrencyMismatch = creditsCurrencyNormalized !== gameCurrency;
+    const hasEnoughCredits = (creditsBalance ?? 0) >= game.price;
+    if (useCredits && (hasCurrencyMismatch || !hasEnoughCredits)) {
+      setUseCredits(false);
+    }
+  }, [game, creditsBalance, creditsCurrency, useCredits]);
 
   const updatePlayerCount = useCallback((delta: number) => {
     setGame((prev) => {
@@ -176,8 +238,25 @@ export default function GameDetailPage() {
     let transactionId: string | null = null;
     let widgetConfirmed = false;
     let releaseReservation = async () => {};
+    const gameCurrency = (game.currency || "KZT").toUpperCase();
+    const creditsCurrencyNormalized = (creditsCurrency || "KZT").toUpperCase();
+    const hasCurrencyMismatch = creditsCurrencyNormalized !== gameCurrency;
+    const hasEnoughCredits = (creditsBalance ?? 0) >= game.price;
+    const shouldUseCredits =
+      game.price > 0 && useCredits && hasEnoughCredits && !hasCurrencyMismatch;
 
     try {
+      if (game.price > 0 && useCredits && !shouldUseCredits) {
+        toaster.create({
+          title: "Credits unavailable",
+          description: hasCurrencyMismatch
+            ? "Credits currency does not match the game."
+            : "Not enough credits to join.",
+          type: "error",
+        });
+        return;
+      }
+
       setActionLoading(true);
       const token = await user.getIdToken();
 
@@ -218,63 +297,65 @@ export default function GameDetailPage() {
           }
         };
 
-        // Wrap widget payment in a promise
-        await new Promise<void>((resolve, reject) => {
-          let settled = false;
-          if (!window.cp?.CloudPayments) {
-            settled = true;
-            reject(new Error("Payment widget not loaded"));
-            return;
-          }
-          const widget = new window.cp.CloudPayments();
-          widget.pay(
-            "charge",
-            {
-              publicId: process.env.NEXT_PUBLIC_TIPTOPPAY_PUBLIC_ID,
-              description: `Join game: ${game.title}`,
-              amount: game.price,
-              currency: game.currency || "KZT",
-              accountId: user.email,
-              skin: "mini",
-              externalId: reservationId ?? undefined,
-              data: {
-                gameId: gameId,
-                userId: user.uid,
+        if (!shouldUseCredits) {
+          // Wrap widget payment in a promise
+          await new Promise<void>((resolve, reject) => {
+            let settled = false;
+            if (!window.cp?.CloudPayments) {
+              settled = true;
+              reject(new Error("Payment widget not loaded"));
+              return;
+            }
+            const widget = new window.cp.CloudPayments();
+            widget.pay(
+              "charge",
+              {
+                publicId: process.env.NEXT_PUBLIC_TIPTOPPAY_PUBLIC_ID,
+                description: `Join game: ${game.title}`,
+                amount: game.price,
+                currency: game.currency || "KZT",
+                accountId: user.email,
+                skin: "mini",
+                externalId: reservationId ?? undefined,
+                data: {
+                  gameId: gameId,
+                  userId: user.uid,
+                },
+                paymentMethodSequence: ["Card", "GooglePay", "ApplePay"],
+                tokenize: true,
               },
-              paymentMethodSequence: ["Card", "GooglePay", "ApplePay"],
-              tokenize: true,
-            },
-            {
-              onSuccess: (result) => {
-                if (settled) return;
-                settled = true;
-                widgetConfirmed = true;
-                const resolvedId =
-                  result?.transactionId ?? result?.paymentId ?? result?.id;
-                if (resolvedId) {
-                  transactionId = String(resolvedId);
-                }
-                resolve();
-              },
-              onFail: (reason: string) => {
-                if (settled) return;
-                settled = true;
-                reject(new Error(`Payment failed: ${reason}`));
-              },
-              onComplete: (result) => {
-                if (!result.success) {
-                  void releaseReservation();
-                  if (!settled) {
-                    settled = true;
-                    reject(new Error("Payment not completed"));
+              {
+                onSuccess: (result) => {
+                  if (settled) return;
+                  settled = true;
+                  widgetConfirmed = true;
+                  const resolvedId =
+                    result?.transactionId ?? result?.paymentId ?? result?.id;
+                  if (resolvedId) {
+                    transactionId = String(resolvedId);
                   }
-                }
+                  resolve();
+                },
+                onFail: (reason: string) => {
+                  if (settled) return;
+                  settled = true;
+                  reject(new Error(`Payment failed: ${reason}`));
+                },
+                onComplete: (result) => {
+                  if (!result.success) {
+                    void releaseReservation();
+                    if (!settled) {
+                      settled = true;
+                      reject(new Error("Payment not completed"));
+                    }
+                  }
+                },
               },
-            },
-          );
-        });
+            );
+          });
+        }
       }
-      if (game.price > 0 && !widgetConfirmed) {
+      if (game.price > 0 && !shouldUseCredits && !widgetConfirmed) {
         toaster.create({
           title: "Payment not confirmed",
           description: "Payment did not complete. Please try again.",
@@ -295,6 +376,7 @@ export default function GameDetailPage() {
               transactionId: transactionId ?? undefined,
               provider: "tiptop-pay",
               widgetConfirmed,
+              useCredits: shouldUseCredits,
             })
           : undefined,
       });
@@ -349,7 +431,16 @@ export default function GameDetailPage() {
     } finally {
       setActionLoading(false);
     }
-  }, [user, game, gameId, fetchGameData, updatePlayerCount]);
+  }, [
+    user,
+    game,
+    gameId,
+    fetchGameData,
+    updatePlayerCount,
+    creditsBalance,
+    creditsCurrency,
+    useCredits,
+  ]);
 
   const handleCancel = useCallback(async () => {
     if (!user || !game) return;
@@ -456,6 +547,11 @@ export default function GameDetailPage() {
       : "Unknown Host";
   const hostAvatar =
     typeof hostInfo === "object" ? hostInfo?.avatar : undefined;
+  const gameCurrency = (game.currency || "KZT").toUpperCase();
+  const creditsCurrencyNormalized = (creditsCurrency || "KZT").toUpperCase();
+  const hasCurrencyMismatch = creditsCurrencyNormalized !== gameCurrency;
+  const hasEnoughCredits = (creditsBalance ?? 0) >= game.price;
+  const canUseCredits = game.price > 0 && !hasCurrencyMismatch && hasEnoughCredits;
 
   // Format date for display
   const gameDate = new Date(game.datetime);
@@ -503,7 +599,7 @@ export default function GameDetailPage() {
             bg="rgba(255, 255, 255, 0.2)"
             color="white"
             borderRadius="full"
-            onClick={() => router.back()}
+            onClick={() => router.push("/games")}
             _hover={{ bg: "rgba(255, 255, 255, 0.3)" }}
           >
             <svg
@@ -585,6 +681,68 @@ export default function GameDetailPage() {
             </Card>
           </SimpleGrid>
         </Box>
+
+        {game.price > 0 && creditsBalance !== null && !isRegistered && (
+          <Box px={4} mb={6}>
+            <Card>
+              <HStack justify="space-between" align="center">
+                <VStack align="flex-start" gap={1}>
+                  <Text
+                    fontSize="12px"
+                    fontWeight="600"
+                    color="#6B7280"
+                    fontFamily="var(--font-inter), sans-serif"
+                  >
+                    Credits balance
+                  </Text>
+                  <Text
+                    fontSize="18px"
+                    fontWeight="700"
+                    color="#111827"
+                    fontFamily="var(--font-inter), sans-serif"
+                  >
+                    {formatGamePrice(creditsBalance, creditsCurrency)}
+                  </Text>
+                </VStack>
+                <VStack align="flex-end" gap={1}>
+                  <Checkbox.Root
+                    colorPalette="green"
+                    checked={useCredits}
+                    disabled={actionLoading || !canUseCredits}
+                    onCheckedChange={(details) =>
+                      setUseCredits(Boolean(details.checked))
+                    }
+                  >
+                    <Checkbox.HiddenInput />
+                    <Checkbox.Control />
+                    <Checkbox.Label>
+                      <Text
+                        fontSize="12px"
+                        fontWeight="600"
+                        color="#111827"
+                        fontFamily="var(--font-inter), sans-serif"
+                      >
+                        Use credits
+                      </Text>
+                    </Checkbox.Label>
+                  </Checkbox.Root>
+                  {!canUseCredits && (
+                    <Text
+                      fontSize="11px"
+                      fontWeight="500"
+                      color="#DC2626"
+                      fontFamily="var(--font-inter), sans-serif"
+                    >
+                      {hasCurrencyMismatch
+                        ? "Currency mismatch"
+                        : "Not enough credits"}
+                    </Text>
+                  )}
+                </VStack>
+              </HStack>
+            </Card>
+          </Box>
+        )}
 
         <Box px={4}>
           {/* Hosted By Section */}
@@ -775,54 +933,65 @@ export default function GameDetailPage() {
         p={4}
         boxShadow="0 -2px 10px rgba(0, 0, 0, 0.05)"
       >
-        <HStack justify="space-between" align="center">
-          {/* Price */}
-          <VStack align="flex-start" gap={0}>
-            <Text
-              fontSize="18px"
-              fontWeight="700"
-              color="#111827"
-              fontFamily="var(--font-inter), sans-serif"
-            >
-              {formatGamePrice(game.price, game.currency)}
-            </Text>
-            <Text
-              fontSize="12px"
-              fontWeight="500"
-              color="#9CA3AF"
-              fontFamily="var(--font-inter), sans-serif"
-            >
-              per person
-            </Text>
-          </VStack>
+        <VStack align="stretch" gap={3}>
+          <HStack justify="space-between" align="center">
+            {/* Price */}
+            <VStack align="flex-start" gap={0}>
+              <Text
+                fontSize="18px"
+                fontWeight="700"
+                color="#111827"
+                fontFamily="var(--font-inter), sans-serif"
+              >
+                {formatGamePrice(game.price, game.currency)}
+              </Text>
+              <Text
+                fontSize="12px"
+                fontWeight="500"
+                color="#9CA3AF"
+                fontFamily="var(--font-inter), sans-serif"
+              >
+                per person
+              </Text>
+            </VStack>
 
-          {/* Action Buttons */}
-          <HStack gap={2}>
-            <SecondaryButton onClick={handleShare}>
-              <HStack gap={2}>
-                <HiShare size={20} />
-                <Text>Share Event</Text>
-              </HStack>
-            </SecondaryButton>
-            {isRegistered ? (
-              <PrimaryButton
-                onClick={handleCancel}
-                loading={actionLoading}
-                disabled={actionLoading}
-              >
-                Cancel
-              </PrimaryButton>
-            ) : (
-              <PrimaryButton
-                onClick={handleJoin}
-                loading={actionLoading}
-                disabled={actionLoading}
-              >
-                Join
-              </PrimaryButton>
-            )}
+            {/* Action Buttons */}
+            <HStack gap={2}>
+              {canManage && (
+                <SecondaryButton
+                  onClick={() => router.push(`/admin/games/${game.id}`)}
+                >
+                  <Text>Manage</Text>
+                </SecondaryButton>
+              )}
+              <SecondaryButton onClick={handleShare}>
+                <HStack gap={2}>
+                  <HiShare size={20} />
+                  <Text>Share Event</Text>
+                </HStack>
+              </SecondaryButton>
+              {isRegistered ? (
+                <PrimaryButton
+                  onClick={handleCancel}
+                  loading={actionLoading}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </PrimaryButton>
+              ) : (
+                <PrimaryButton
+                  onClick={handleJoin}
+                  loading={actionLoading}
+                  disabled={actionLoading}
+                >
+                  Join
+                </PrimaryButton>
+              )}
+            </HStack>
           </HStack>
-        </HStack>
+
+          {/* credits row moved above content */}
+        </VStack>
       </Box>
     </Box>
   );
