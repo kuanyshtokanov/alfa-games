@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
     const hostId = searchParams.get("hostId");
     const isPublic = searchParams.get("isPublic");
     const status = searchParams.get("status") || "upcoming";
+    const time = searchParams.get("time") || "all";
     const clubId = searchParams.get("clubId");
     const limit = parseInt(searchParams.get("limit") || "50");
     const skip = parseInt(searchParams.get("skip") || "0");
@@ -82,6 +83,12 @@ export async function GET(request: NextRequest) {
 
     if (clubId) {
       query.clubId = clubId;
+    }
+
+    if (time === "upcoming") {
+      query.datetime = { $gte: new Date() };
+    } else if (time === "past") {
+      query.datetime = { $lt: new Date() };
     }
 
     const games = await Game.find(query)
