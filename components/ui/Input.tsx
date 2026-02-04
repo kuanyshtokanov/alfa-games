@@ -15,6 +15,7 @@ import {
   Textarea as ChakraTextarea,
   TextareaProps as ChakraTextareaProps,
   Box,
+  Icon,
 } from "@chakra-ui/react";
 
 export type TextInputProps = ChakraInputProps;
@@ -79,17 +80,12 @@ export function SearchInput({ ...props }: TextInputProps) {
         pointerEvents="none"
         zIndex={1}
       >
-        <Box
-          as="svg"
-          viewBox="0 0 24 24"
-          boxSize={5}
-          color="gray.400"
-        >
+        <Icon viewBox="0 0 24 24" boxSize={5} color="gray.400">
           <path
             fill="currentColor"
             d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
           />
-        </Box>
+        </Icon>
       </Box>
       <TextInput pl={10} placeholder="Search events..." {...props} />
     </Box>
