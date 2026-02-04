@@ -6,6 +6,10 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Box,
+  VStack,
+  AlertRoot,
+  AlertContent,
+  AlertIndicator,
   Center,
   Text,
 } from "@chakra-ui/react";
