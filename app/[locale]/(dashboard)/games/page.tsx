@@ -41,11 +41,14 @@ export default function FindMatchPage() {
       const token = await user.getIdToken();
 
       // Fetch all public games
-      const response = await fetch(`/api/games?isPublic=true&status=upcoming`, {
+      const response = await fetch(
+        `/api/games?isPublic=true&status=upcoming&time=upcoming`,
+        {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch games");
