@@ -20,7 +20,6 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { PrimaryButton, SecondaryButton } from "@/components/ui/Button";
 import { formatGameLocation, formatGamePrice } from "@/lib/utils/game";
-import { canUserManageGame, getCurrentUserRole } from "@/lib/utils/rbac-client";
 import { HiLocationMarker, HiClock, HiShare } from "react-icons/hi";
 import type { Game } from "@/types/game";
 import { toaster } from "@/components/ui/toaster";
@@ -85,7 +84,6 @@ export default function GameDetailPage() {
   const [creditsBalance, setCreditsBalance] = useState<number | null>(null);
   const [creditsCurrency, setCreditsCurrency] = useState<string>("KZT");
   const [useCredits, setUseCredits] = useState(false);
-  const [canManage, setCanManage] = useState(false);
 
   const gameId = params.id as string;
 
@@ -169,32 +167,6 @@ export default function GameDetailPage() {
     return () => window.clearInterval(intervalId);
   }, [user, gameId, fetchGameData]);
 
-  useEffect(() => {
-    if (!user || !game) {
-      setCanManage(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const checkManagePermission = async () => {
-      try {
-        const role = await getCurrentUserRole(user);
-        if (cancelled) return;
-        setCanManage(canUserManageGame(role, game.hostId));
-      } catch {
-        if (!cancelled) {
-          setCanManage(false);
-        }
-      }
-    };
-
-    checkManagePermission();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, game]);
 
   useEffect(() => {
     if (!user || !gameId) return;
@@ -579,7 +551,7 @@ export default function GameDetailPage() {
 
   return (
     <Box
-      h="100vh"
+      h={{ base: "100svh", md: "100vh" }}
       bg="#F8F8F8"
       display="flex"
       flexDirection="column"
@@ -957,13 +929,6 @@ export default function GameDetailPage() {
 
             {/* Action Buttons */}
             <HStack gap={2}>
-              {canManage && (
-                <SecondaryButton
-                  onClick={() => router.push(`/admin/games/${game.id}`)}
-                >
-                  <Text>Manage</Text>
-                </SecondaryButton>
-              )}
               <SecondaryButton onClick={handleShare}>
                 <HStack gap={2}>
                   <HiShare size={20} />
